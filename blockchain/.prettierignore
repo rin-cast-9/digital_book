@@ -1,0 +1,11 @@
+node_modules
+coverage
+*.min.js
+*.json
+ignition
+cache
+artifacts
+*.config.*
+typechain-types
+typechain
+.prettierrc.js
