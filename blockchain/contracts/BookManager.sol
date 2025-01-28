@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-contract BookManager {
+import "./RolesManager.sol";
+
+contract BookManager is RolesManager {
 
     struct Book {
         string name;
@@ -16,24 +18,12 @@ contract BookManager {
 
     event BookAdded(uint256 indexed bookId, string name);
 
-    function getBook(uint256 _bookId) public view returns (
-        string memory name,
-        string memory publisher,
-        string memory publisherCity,
-        string[] memory authors,
-        uint16 yearPublished,
-        bool isAdopted
-    ) {
-        Book memory book = books[_bookId];
+    function getBook(uint256 _bookId) public view returns (Book memory) {
+        return books[_bookId];
+    }
 
-        return (
-            book.name,
-            book.publisher,
-            book.publisherCity,
-            book.authors,
-            book.yearPublished,
-            book.isAdopted
-        );
+    function getBooks() public view returns (Book[] memory) {
+        return books;
     }
 
     function addBook(
@@ -42,7 +32,7 @@ contract BookManager {
         string memory _publisher,
         string memory _publisherCity,
         string[] memory _authors
-    ) public {
+    ) public onlyRole(OPERATOR_ROLE) {
         Book memory newBook = Book({
             name: _name,
             publisher: _publisher,
@@ -57,7 +47,28 @@ contract BookManager {
         emit BookAdded(books.length - 1, _name);
     }
 
-    function adoptBook(uint256 _bookId) public {
+    function addBooks(
+        uint16[] memory _yearPublisheds,
+        string[] memory _names,
+        string[] memory _publishers,
+        string[] memory _publisherCities,
+        string[][] memory _authors
+    ) public onlyRole(OPERATOR_ROLE) {
+        require(
+            _names.length == _yearPublisheds.length &&
+            _names.length == _publishers.length &&
+            _names.length == _publisherCities.length &&
+            _names.length == _authors.length,
+            "All arrays must have the same length"
+        );
+
+        for (uint256 i = 0; i < _names.length; i ++) {
+            books.push(Book(_names[i], _publishers[i], _publisherCities[i], _authors[i], _yearPublisheds[i], false));
+            emit BookAdded(books.length - 1, _names[i]);
+        }
+    }
+
+    function adoptBook(uint256 _bookId) public onlyRole(USER_ROLE) {
         books[_bookId].isAdopted = true;
     }
 
