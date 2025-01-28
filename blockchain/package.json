@@ -43,6 +43,7 @@
     "typescript-eslint": "^8.21.0"
   },
   "dependencies": {
-    "@nomicfoundation/ignition-core": "^0.15.9"
+    "@nomicfoundation/ignition-core": "^0.15.9",
+    "@openzeppelin/contracts": "^5.2.0"
   }
 }
