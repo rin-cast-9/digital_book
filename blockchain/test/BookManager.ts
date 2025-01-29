@@ -1,20 +1,37 @@
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
+import { BookManager } from "../typechain-types";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("BookManager", function () {
     
     async function deployBookManagerContract() {
-        const [owner, otherAccount] = await hre.ethers.getSigners();
+        const [owner, operatorAccount, managerAccount, userAccount] = await hre.ethers.getSigners();
 
         const BookManager = await hre.ethers.getContractFactory("BookManager");
         const bookManager = await BookManager.deploy();
 
-        return { bookManager, owner, otherAccount };
+        return { bookManager, owner, operatorAccount, managerAccount, userAccount };
     }
 
+    let bookManager: BookManager;
+    let owner: HardhatEthersSigner;
+    let operatorAccount: HardhatEthersSigner;
+    let managerAccount: HardhatEthersSigner;
+    let userAccount: HardhatEthersSigner;
+
+    beforeEach(async function() {
+        ({ bookManager, owner, operatorAccount, managerAccount, userAccount } = await loadFixture(deployBookManagerContract));
+
+        await bookManager.connect(owner).addOperator(operatorAccount.address);
+        await bookManager.connect(owner).addManager(managerAccount.address);
+        await bookManager.connect(managerAccount).addUser(userAccount.address);
+    });
+
     describe("Core functionality", function() {
-        it("Should add a book into the contract", async function() {
+
+        it("Should add a book into the contract", async function() {            
             const book = {
                 name: "Book0",
                 publisher: "Publisher0",
@@ -27,9 +44,7 @@ describe("BookManager", function () {
                 yearPublished: 2025
             };
 
-            const { bookManager } = await loadFixture(deployBookManagerContract);
-
-            await bookManager.addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
+            await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
 
             const returnedBook = await bookManager.getBook(0);
             
