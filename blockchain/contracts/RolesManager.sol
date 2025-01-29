@@ -9,6 +9,11 @@ contract RolesManager is AccessControl {
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant USER_ROLE = keccak256("USER_ROLE");
 
+    constructor() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setRoleAdmin(USER_ROLE, MANAGER_ROLE);
+    }
+
     function addOperator(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(OPERATOR_ROLE, account);
     }
