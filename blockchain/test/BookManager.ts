@@ -60,30 +60,54 @@ describe("BookManager", () => {
             expect(returnedBook).to.deep.equal({ ...book, isAdopted: false });
         });
 
-        it("Should add a bunch of books into the contract", async () => {
-            const books = [
-                {
-                    name: "Book0",
-                    publisher: "Publisher0",
-                    publisherCity: "PublisherCity0",
-                    authors: ["Author0", "Author1", "Author2"],
+        it("Should adopt a book", async () => {
+            const book = {
+                name: "Book0",
+                publisher: "Publisher0",
+                publisherCity: "PublisherCity0",
+                authors: [
+                    "Author0",
+                    "Author1",
+                    "Author2"
+                ],
+                yearPublished: 2025
+            };
+
+            await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
+            await bookManager.connect(userAccount).adoptBook(0);
+
+            const returnedBookRaw = await bookManager.getBook(0);
+
+            const returnedBook = {
+                name: returnedBookRaw[0],
+                publisher: returnedBookRaw[1],
+                publisherCity: returnedBookRaw[2],
+                authors: returnedBookRaw[3],
+                yearPublished: Number(returnedBookRaw[4]),
+                isAdopted: returnedBookRaw[5]
+            };
+
+            expect(returnedBook).to.deep.equal({ ...book, isAdopted: true });
+        });
+
+        it("Should adopt only one book among others", async () => {
+            const numberOfBooks = 3;
+
+            let books = [];
+
+            for (let i = 0; i < numberOfBooks; ++ i) {
+                books.push({
+                    name: `Book${i}`,
+                    publisher: `Publisher${i}`,
+                    publisherCity: `PublisherCity${i}`,
+                    authors: [
+                        `Author${i * 3}`,
+                        `Author${i * 3 + 1}`,
+                        `Author${i * 3 + 2}`
+                    ],
                     yearPublished: 2025
-                },
-                {
-                    name: "Book1",
-                    publisher: "Publisher1",
-                    publisherCity: "PublisherCity1",
-                    authors: ["Author3", "Author4", "Author5"],
-                    yearPublished: 2023
-                },
-                {
-                    name: "Book2",
-                    publisher: "Publisher2",
-                    publisherCity: "PublisherCity2",
-                    authors: ["Author6", "Author7", "Author8"],
-                    yearPublished: 2024
-                }
-            ];
+                });
+            }
 
             const years = books.map(b => b.yearPublished);
             const names = books.map(b => b.name);
@@ -91,8 +115,12 @@ describe("BookManager", () => {
             const publisherCities = books.map(b => b.publisherCity);
             const authors = books.map(b => b.authors);
 
-            await bookManager.connect(operatorAccount).addBooks(years, names, publishers, publisherCities, authors);
+            for (let i = 0; i < numberOfBooks; ++ i) {
+                await bookManager.connect(operatorAccount).addBook(years[i], names[i], publishers[i], publisherCities[i], authors[i]);
+            }
 
+            await bookManager.connect(userAccount).adoptBook(1);
+            
             const returnedBooksRaw = await bookManager.getBooks();
 
             const returnedBooks = returnedBooksRaw.map(b => ({
@@ -104,8 +132,54 @@ describe("BookManager", () => {
                 isAdopted: b[5]
             }));
 
-            expect(returnedBooks).to.deep.equal(books.map(b => ({ ...b, isAdopted: false })));
-        })
+            expect(returnedBooks[0]).to.deep.equal({ ...books[0], isAdopted: false });
+            expect(returnedBooks[1]).to.deep.equal({ ...books[1], isAdopted: true });
+            expect(returnedBooks[2]).to.deep.equal({ ...books[2], isAdopted: false });
+        });
+
+    });
+
+    describe("Events", () => {
+
+        it("Should emit an event on a book addition", async () => {
+            const book = {
+                name: "Book0",
+                publisher: "Publisher0",
+                publisherCity: "PublisherCity0",
+                authors: [
+                    "Author0",
+                    "Author1",
+                    "Author2"
+                ],
+                yearPublished: 2025
+            };
+
+            const tx = await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
+            const block = await hre.ethers.provider.getBlock(tx.blockNumber!);
+
+            await expect(tx).to.emit(bookManager, "BookAdded").withArgs(0, operatorAccount.address, block?.timestamp);
+        });
+
+        it("Should emit an event on a book adoption", async () => {
+            const book = {
+                name: "Book0",
+                publisher: "Publisher0",
+                publisherCity: "PublisherCity0",
+                authors: [
+                    "Author0",
+                    "Author1",
+                    "Author2"
+                ],
+                yearPublished: 2025
+            };
+
+            await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
+
+            const tx = await bookManager.connect(userAccount).adoptBook(0);
+            const block = await hre.ethers.provider.getBlock(tx.blockNumber!);
+
+            await expect(tx).to.emit(bookManager, "BookAdopted").withArgs(0, userAccount, block?.timestamp);
+        });
 
     });
 
