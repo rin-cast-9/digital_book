@@ -83,19 +83,19 @@ describe("RolesManager", function () {
             const customErrorName = "AccessControlUnauthorizedAccount";
             
             it("Should fail at granting an operator role using unauthorized account", async () => {
-                expect(rolesManager.connect(userAccount).addOperator(operatorAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(userAccount).addOperator(operatorAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
             it("Should fail at granting a manager role using unauthorized account", async () => {
-                expect(rolesManager.connect(userAccount).addManager(managerAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(userAccount).addManager(managerAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
             it("Should fail at granting a user role using unauthorized account", async () => {
-                expect(rolesManager.connect(operatorAccount).addUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(operatorAccount).addUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
             it("Should fail at granting a user role using owner account", async () => {
-                expect(rolesManager.connect(owner).addUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(owner).addUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
         });
@@ -111,19 +111,19 @@ describe("RolesManager", function () {
             });
 
             it("Should fail at revoking an operator role using unauthorized account", async () => {
-                expect(rolesManager.connect(userAccount).revokeOperator(operatorAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(userAccount).revokeOperator(operatorAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
             it("Should fail at revoking a manager role using unauthorized accont", async () => {
-                expect(rolesManager.connect(userAccount).revokeManager(managerAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(userAccount).revokeManager(managerAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
             it("Should fail at revoking a user role using unauthorized account", async () => {
-                expect(rolesManager.connect(operatorAccount).revokeUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(operatorAccount).revokeUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
             it("Should fail at revoking a user role using owner account", async () => {
-                expect(rolesManager.connect(owner).revokeUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
+                await expect(rolesManager.connect(owner).revokeUser(userAccount.address)).to.be.revertedWithCustomError(rolesManager, customErrorName);
             });
 
         });
