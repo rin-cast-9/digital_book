@@ -16,7 +16,8 @@ contract BookManager is RolesManager {
 
     Book[] private books;
 
-    event BookAdded(uint256 indexed bookId, string name);
+    event BookAdded(uint256 indexed bookId, address indexed addedBy, uint256 timestamp);
+    event BookAdopted(uint256 indexed bookId, address indexed adopter, uint256 timestamp);
 
     function getBook(uint256 _bookId) public view returns (Book memory) {
         return books[_bookId];
@@ -44,32 +45,13 @@ contract BookManager is RolesManager {
 
         books.push(newBook);
 
-        emit BookAdded(books.length - 1, _name);
-    }
-
-    function addBooks(
-        uint16[] memory _yearPublisheds,
-        string[] memory _names,
-        string[] memory _publishers,
-        string[] memory _publisherCities,
-        string[][] memory _authors
-    ) public onlyRole(OPERATOR_ROLE) {
-        require(
-            _names.length == _yearPublisheds.length &&
-            _names.length == _publishers.length &&
-            _names.length == _publisherCities.length &&
-            _names.length == _authors.length,
-            "All arrays must have the same length"
-        );
-
-        for (uint256 i = 0; i < _names.length; i ++) {
-            books.push(Book(_names[i], _publishers[i], _publisherCities[i], _authors[i], _yearPublisheds[i], false));
-            emit BookAdded(books.length - 1, _names[i]);
-        }
+        emit BookAdded(books.length - 1, msg.sender, block.timestamp);
     }
 
     function adoptBook(uint256 _bookId) public onlyRole(USER_ROLE) {
         books[_bookId].isAdopted = true;
+
+        emit BookAdopted(_bookId, msg.sender, block.timestamp);
     }
 
 }
