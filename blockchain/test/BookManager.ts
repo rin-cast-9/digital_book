@@ -5,14 +5,19 @@ import { BookManager } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("BookManager", () => {
-    
     async function deployBookManagerContract() {
         const [owner, operatorAccount, managerAccount, userAccount] = await hre.ethers.getSigners();
 
         const BookManager = await hre.ethers.getContractFactory("BookManager");
         const bookManager = await BookManager.deploy();
 
-        return { bookManager, owner, operatorAccount, managerAccount, userAccount };
+        return {
+            bookManager,
+            owner,
+            operatorAccount,
+            managerAccount,
+            userAccount,
+        };
     }
 
     let bookManager: BookManager;
@@ -30,18 +35,13 @@ describe("BookManager", () => {
     });
 
     describe("Core functionality", () => {
-
-        it("Should add a book into the contract", async () => {            
+        it("Should add a book into the contract", async () => {
             const book = {
                 name: "Book0",
                 publisher: "Publisher0",
                 publisherCity: "PublisherCity0",
-                authors: [
-                    "Author0",
-                    "Author1",
-                    "Author2"
-                ],
-                yearPublished: 2025
+                authors: ["Author0", "Author1", "Author2"],
+                yearPublished: 2025,
             };
 
             await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
@@ -54,7 +54,7 @@ describe("BookManager", () => {
                 publisherCity: returnedBookRaw[2],
                 authors: returnedBookRaw[3],
                 yearPublished: Number(returnedBookRaw[4]),
-                isAdopted: returnedBookRaw[5]
+                isAdopted: returnedBookRaw[5],
             };
 
             expect(returnedBook).to.deep.equal({ ...book, isAdopted: false });
@@ -65,12 +65,8 @@ describe("BookManager", () => {
                 name: "Book0",
                 publisher: "Publisher0",
                 publisherCity: "PublisherCity0",
-                authors: [
-                    "Author0",
-                    "Author1",
-                    "Author2"
-                ],
-                yearPublished: 2025
+                authors: ["Author0", "Author1", "Author2"],
+                yearPublished: 2025,
             };
 
             await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
@@ -84,7 +80,7 @@ describe("BookManager", () => {
                 publisherCity: returnedBookRaw[2],
                 authors: returnedBookRaw[3],
                 yearPublished: Number(returnedBookRaw[4]),
-                isAdopted: returnedBookRaw[5]
+                isAdopted: returnedBookRaw[5],
             };
 
             expect(returnedBook).to.deep.equal({ ...book, isAdopted: true });
@@ -95,63 +91,62 @@ describe("BookManager", () => {
 
             let books = [];
 
-            for (let i = 0; i < numberOfBooks; ++ i) {
+            for (let i = 0; i < numberOfBooks; ++i) {
                 books.push({
                     name: `Book${i}`,
                     publisher: `Publisher${i}`,
                     publisherCity: `PublisherCity${i}`,
-                    authors: [
-                        `Author${i * 3}`,
-                        `Author${i * 3 + 1}`,
-                        `Author${i * 3 + 2}`
-                    ],
-                    yearPublished: 2025
+                    authors: [`Author${i * 3}`, `Author${i * 3 + 1}`, `Author${i * 3 + 2}`],
+                    yearPublished: 2025,
                 });
             }
 
-            const years = books.map(b => b.yearPublished);
-            const names = books.map(b => b.name);
-            const publishers = books.map(b => b.publisher);
-            const publisherCities = books.map(b => b.publisherCity);
-            const authors = books.map(b => b.authors);
+            const years = books.map((b) => b.yearPublished);
+            const names = books.map((b) => b.name);
+            const publishers = books.map((b) => b.publisher);
+            const publisherCities = books.map((b) => b.publisherCity);
+            const authors = books.map((b) => b.authors);
 
-            for (let i = 0; i < numberOfBooks; ++ i) {
+            for (let i = 0; i < numberOfBooks; ++i) {
                 await bookManager.connect(operatorAccount).addBook(years[i], names[i], publishers[i], publisherCities[i], authors[i]);
             }
 
             await bookManager.connect(userAccount).adoptBook(1);
-            
+
             const returnedBooksRaw = await bookManager.getBooks();
 
-            const returnedBooks = returnedBooksRaw.map(b => ({
+            const returnedBooks = returnedBooksRaw.map((b) => ({
                 name: b[0],
                 publisher: b[1],
                 publisherCity: b[2],
                 authors: b[3],
                 yearPublished: Number(b[4]),
-                isAdopted: b[5]
+                isAdopted: b[5],
             }));
 
-            expect(returnedBooks[0]).to.deep.equal({ ...books[0], isAdopted: false });
-            expect(returnedBooks[1]).to.deep.equal({ ...books[1], isAdopted: true });
-            expect(returnedBooks[2]).to.deep.equal({ ...books[2], isAdopted: false });
+            expect(returnedBooks[0]).to.deep.equal({
+                ...books[0],
+                isAdopted: false,
+            });
+            expect(returnedBooks[1]).to.deep.equal({
+                ...books[1],
+                isAdopted: true,
+            });
+            expect(returnedBooks[2]).to.deep.equal({
+                ...books[2],
+                isAdopted: false,
+            });
         });
-
     });
 
     describe("Events", () => {
-
         it("Should emit an event on a book addition", async () => {
             const book = {
                 name: "Book0",
                 publisher: "Publisher0",
                 publisherCity: "PublisherCity0",
-                authors: [
-                    "Author0",
-                    "Author1",
-                    "Author2"
-                ],
-                yearPublished: 2025
+                authors: ["Author0", "Author1", "Author2"],
+                yearPublished: 2025,
             };
 
             const tx = await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
@@ -165,12 +160,8 @@ describe("BookManager", () => {
                 name: "Book0",
                 publisher: "Publisher0",
                 publisherCity: "PublisherCity0",
-                authors: [
-                    "Author0",
-                    "Author1",
-                    "Author2"
-                ],
-                yearPublished: 2025
+                authors: ["Author0", "Author1", "Author2"],
+                yearPublished: 2025,
             };
 
             await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
@@ -180,7 +171,5 @@ describe("BookManager", () => {
 
             await expect(tx).to.emit(bookManager, "BookAdopted").withArgs(0, userAccount, block?.timestamp);
         });
-
     });
-
 });
