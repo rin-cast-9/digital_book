@@ -1,5 +1,8 @@
+# dependencies
 **/node_modules
 **/.env
+**/.pnp
+**.pnp.js
 
 # Hardhat files
 blockchain/cache
@@ -10,11 +13,19 @@ blockchain/typechain
 blockchain/typechain-types
 
 # solidity-coverage files
-blockchain/coverage
-blockchain/coverage.json
+**/coverage
+**/coverage.json
+
+# production
+**/build
 
 # Hardhat Ignition default folder for deployments against a local node
 blockchain/ignition/deployments/chain-31337
 
-# OS-specific files
+# misc
 **/.DS_Store
+**/.env.**
+
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
