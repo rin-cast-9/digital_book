@@ -49,6 +49,8 @@ contract BookManager is RolesManager {
     }
 
     function adoptBook(uint256 _bookId) public onlyRole(USER_ROLE) {
+        require(books[_bookId].isAdopted == false, "The book is already adopted");
+
         books[_bookId].isAdopted = true;
 
         emit BookAdopted(_bookId, msg.sender, block.timestamp);
