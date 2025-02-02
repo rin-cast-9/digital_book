@@ -137,6 +137,22 @@ describe("BookManager", () => {
                 isAdopted: false,
             });
         });
+
+        it("Should fail at adopting an adopted book", async () => {
+            const book = {
+                name: "Book0",
+                publisher: "Publisher0",
+                publisherCity: "PublisherCity0",
+                authors: ["Author0", "Author1", "Author2"],
+                yearPublished: 2025,
+            };
+
+            await bookManager.connect(operatorAccount).addBook(book.yearPublished, book.name, book.publisher, book.publisherCity, book.authors);
+
+            await bookManager.connect(userAccount).adoptBook(0);
+
+            await expect(bookManager.connect(userAccount).adoptBook(0)).to.be.revertedWith("The book is already adopted");
+        });
     });
 
     describe("Events", () => {
