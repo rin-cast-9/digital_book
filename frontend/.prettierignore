@@ -4,4 +4,4 @@ coverage
 *.json
 cache
 *.config.*
-.prettierrc.js
+.prettierrc.cjs

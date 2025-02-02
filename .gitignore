@@ -1,7 +1,10 @@
 # dependencies
-**/node_modules
-**/.pnp
+node_modules
+.pnp
 **.pnp.js
+dist
+dist-ssr
+*.local
 
 # Hardhat files
 blockchain/cache
@@ -12,19 +15,32 @@ blockchain/typechain
 blockchain/typechain-types
 
 # solidity-coverage files
-**/coverage
-**/coverage.json
+coverage
+coverage.json
 
 # production
-**/build
+build
 
 # Hardhat Ignition default folder for deployments against a local node
 blockchain/ignition/deployments/chain-31337
 
 # misc
-**/.DS_Store
-**/.env.**
+.DS_Store
+.env.**
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-**/npm-debug.log*
-**/yarn-debug.log*
-**/yarn-error.log*
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
