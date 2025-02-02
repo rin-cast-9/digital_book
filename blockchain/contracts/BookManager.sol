@@ -19,11 +19,11 @@ contract BookManager is RolesManager {
     event BookAdded(uint256 indexed bookId, address indexed addedBy, uint256 timestamp);
     event BookAdopted(uint256 indexed bookId, address indexed adopter, uint256 timestamp);
 
-    function getBook(uint256 _bookId) public view returns (Book memory) {
+    function getBook(uint256 _bookId) external view returns (Book memory) {
         return books[_bookId];
     }
 
-    function getBooks() public view returns (Book[] memory) {
+    function getBooks() external view returns (Book[] memory) {
         return books;
     }
 
