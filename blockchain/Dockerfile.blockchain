@@ -1,0 +1,9 @@
+FROM node:20-alpine
+WORKDIR /app
+RUN apk update && apk add --no-cache curl
+COPY ./package.json ./yarn.lock ./blockchain/
+RUN cd ./blockchain && yarn install --frozen-lockfile
+COPY . ./blockchain/
+RUN chmod +x ./blockchain/entrypoint.sh
+EXPOSE 8545
+CMD [ "sh", "-c", " cd ./blockchain && ./entrypoint.sh" ]

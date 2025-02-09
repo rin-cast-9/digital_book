@@ -1,0 +1,8 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY ./package.json ./yarn.lock ./frontend/
+RUN cd ./frontend && yarn install --frozen-lockfile
+COPY . ./frontend/
+RUN cd ./frontend && mkdir -p ./src/artifacts
+EXPOSE 3000
+CMD [ "sh", "-c", "cd ./frontend && yarn dev --host" ]
