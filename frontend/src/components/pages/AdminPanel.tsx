@@ -26,7 +26,7 @@ async function saveAdminKey(adminKey: string): Promise<boolean> {
 }
 
 async function verifyAdminKey(adminKey: string): Promise<boolean> {
-    const provider = new ethers.JsonRpcProvider("http://localhost:8546/");
+    const provider = new ethers.JsonRpcProvider(`http://${window.location.hostname}:8546/`);
 
     const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, provider);
     const isAdmin = await contract.hasRole(DEFAULT_ADMIN_ROLE, adminKey);
