@@ -1,35 +1,60 @@
-import React, { useState } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useEffect, useState } from 'react';
 
 interface LabeledInputProps {
     label: string;
-    onSubmit: (value: string) => Promise<boolean>;
+    value: string;
+    onChange: (v: string) => void;
+    onSubmit: () => void;
+    onVerify: (value: string) => Promise<boolean>;
+    disabled?: boolean;
+    disableOnSuccess?: boolean;
+    persistStorageKey?: string;
 }
 
-const LabeledInput: React.FC<LabeledInputProps> = ({ label, onSubmit }) => {
-    const [value, setValue] = useState("");
-    const [feedbackMessage, setFeedbackMessage] = useState<string | null> (null);
-    const [feedbackStyle, setFeedbackStyle] = useState<string> ("");
-    const [isVerified, setIsVerified] = useState(false);
+const LabeledInput: React.FC<LabeledInputProps> = ({
+    label,
+    value,
+    onChange,
+    onSubmit,
+    onVerify,
+    disabled = false,
+    disableOnSuccess = false,
+    persistStorageKey,
+}) => {
 
-    const handleSubmit = async (inputValue: string) => {
-        try {
-            const isAdmin = await onSubmit(inputValue);
+    const [feedback, setFeedback] = useState({ message: "", style: "" });
+    const [isDisabled, setIsDisabled] = useState(false);
 
-            if (isAdmin) {
-                setFeedbackMessage("Admin key has been successfully verified.");
-                setFeedbackStyle("text-success");
-                setValue("✅");
-                setIsVerified(true);
-            }
-            else {
-                setFeedbackMessage("The provided key is not an Admin key.");
-                setFeedbackStyle("text-danger");
+    useEffect(() => {
+        if (persistStorageKey) {
+            const stored = sessionStorage.getItem(persistStorageKey);
+
+            if (stored) {
+                setIsDisabled(true);
+                onChange(stored);
+                setFeedback({ message: "Key verified from session.", style: "text-success" });
             }
         }
-        catch (error) {
-            setFeedbackMessage("An error occurred during verification.");
-            setFeedbackStyle("text-danger");
+    }, [persistStorageKey, onChange]);
+
+    const handleSubmit = async () => {
+        try {
+            const valid = await onVerify(value);
+
+            if (valid) {
+                setFeedback({ message: "Key successfully verified.", style: "text-success" });
+                if (disableOnSuccess) {
+                    setIsDisabled(true);
+                }
+                onSubmit();
+            }
+            else {
+                setFeedback({ message: "The provided key is not valid.", style: "text-danger" });
+            }
+        }
+        catch {
+            setFeedback({ message: "An error occurred during verification", style: "text-danger" });
         }
     };
 
@@ -38,26 +63,27 @@ const LabeledInput: React.FC<LabeledInputProps> = ({ label, onSubmit }) => {
             <label className="form-label"> {label} </label>
             <div className="input-group">
                 <input 
-                    className="form-control"
                     type="text"
+                    className="form-control"
                     value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    disabled={isVerified}
+                    onChange={(e) => onChange(e.target.value)}
+                    disabled={disabled || isDisabled}
                 />
                 <button 
                     className="btn btn-primary"
-                    onClick={() => handleSubmit(value)}
-                    disabled={isVerified}
+                    onClick={handleSubmit}
+                    disabled={disabled || isDisabled}
                 >
                     Submit
                 </button>
             </div>
             <div className="text-start" style={{ minHeight: "1.5rem" }}>
-                {feedbackMessage && (
-                    <small className={feedbackStyle}>
-                        {feedbackMessage}
+                {
+                    feedback.message &&
+                    <small className={feedback.style}>
+                        {feedback.message}
                     </small>
-                )}
+                }
             </div>
         </div>
     );
