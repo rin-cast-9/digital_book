@@ -11,6 +11,7 @@ const KeyManager = () => {
     const [operatorKey, setOperatorKey] = useState("");
     // const [managerKey, setManagerKey] = useState("");
     // const [userKey, setUserKey] = useState("");
+    const [isAdminVerified, setIsAdminVerified] = useState(false);
 
     const provider = new ethers.JsonRpcProvider(`http://${window.location.hostname}:8546/`);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, provider);
@@ -21,6 +22,7 @@ const KeyManager = () => {
 
     const onSubmitAdmin = () => {
         sessionStorage.setItem("adminKey", adminKey);
+        setIsAdminVerified(true);
         setAdminKey("✅");
     }
 
@@ -75,9 +77,10 @@ const KeyManager = () => {
                 onChange={setOperatorKey}
                 onSubmit={onSubmitOperator}
                 onVerify={onVerifyOperator}
+                disabled={!isAdminVerified}
             />
         </>
-    )
-}
+    );
+};
 
 export default KeyManager;
