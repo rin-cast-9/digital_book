@@ -6,6 +6,7 @@ interface LabeledInputProps {
     value: string;
     onChange: (v: string) => void;
     onSubmit: () => void;
+    onRevoke: () => void;
     onVerify: (value: string) => Promise<boolean>;
     disabled?: boolean;
     disableOnSuccess?: boolean;
@@ -17,6 +18,7 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
     value,
     onChange,
     onSubmit,
+    onRevoke,
     onVerify,
     disabled = false,
     disableOnSuccess = false,
@@ -33,29 +35,48 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
             if (stored) {
                 setIsDisabled(true);
                 onChange(stored);
+
                 setFeedback({ message: "Key verified from session.", style: "text-success" });
             }
         }
     }, [persistStorageKey, onChange]);
 
-    const handleSubmit = async () => {
-        try {
-            const valid = await onVerify(value);
-
-            if (valid) {
-                setFeedback({ message: "Key successfully verified.", style: "text-success" });
-                if (disableOnSuccess) {
-                    setIsDisabled(true);
+    const handleSubmit = () => {
+        onVerify(value)
+            .then((valid: boolean) => {
+                if (valid) {
+                    setFeedback({ message: "Key successfully verified.", style: "text-success" });
+                    if (disableOnSuccess) {
+                        setIsDisabled(true);
+                    }
+                    onSubmit();
                 }
-                onSubmit();
-            }
-            else {
-                setFeedback({ message: "The provided key is not valid.", style: "text-danger" });
-            }
-        }
-        catch {
-            setFeedback({ message: "An error occurred during verification", style: "text-danger" });
-        }
+                else {
+                    setFeedback({ message: "The provided key is not valid.", style: "text-danger" });
+                }
+            })
+            .catch(() => {
+                setFeedback({ message: "An error occurred during verification", style: "text-danger" });
+            });
+    };
+
+    const handleRevoke = async () => {
+        onVerify(value)
+            .then((valid: boolean) => {
+                if (valid) {
+                    setFeedback({ message: "Key successfully revoked.", style: "text-info" });
+                    if (disableOnSuccess) {
+                        setIsDisabled(false);
+                    }
+                    onRevoke();
+                }
+                else {
+                    setFeedback({ message: "The key is not assigend to the role.", style: "text-danger" });
+                }
+            })
+            .catch(() => {
+                setFeedback({ message: "An error occurred during revokation.", style: "text-danger" });
+            })
     };
 
     return (
@@ -75,6 +96,13 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
                     disabled={disabled || isDisabled}
                 >
                     Submit
+                </button>
+                <button 
+                    className="btn btn-outline-danger"
+                    onClick={handleRevoke}
+                    disabled={disabled || !Boolean(value)}
+                >
+                    Revoke
                 </button>
             </div>
             <div className="text-start" style={{ minHeight: "1.5rem" }}>
