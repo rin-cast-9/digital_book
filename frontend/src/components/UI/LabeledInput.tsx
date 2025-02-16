@@ -43,13 +43,13 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
 
     const handleSubmit = () => {
         onVerify(value)
-            .then((valid: boolean) => {
-                if (valid) {
+            .then((exists: boolean) => {
+                if (!exists) {
                     setFeedback({ message: "Key successfully verified.", style: "text-success" });
+                    onSubmit();
                     if (disableOnSuccess) {
                         setIsDisabled(true);
                     }
-                    onSubmit();
                 }
                 else {
                     setFeedback({ message: "The provided key is not valid.", style: "text-danger" });
@@ -62,13 +62,13 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
 
     const handleRevoke = async () => {
         onVerify(value)
-            .then((valid: boolean) => {
-                if (valid) {
+            .then((exists: boolean) => {
+                if (exists) {
                     setFeedback({ message: "Key successfully revoked.", style: "text-info" });
+                    onRevoke();
                     if (disableOnSuccess) {
                         setIsDisabled(false);
                     }
-                    onRevoke();
                 }
                 else {
                     setFeedback({ message: "The key is not assigend to the role.", style: "text-danger" });

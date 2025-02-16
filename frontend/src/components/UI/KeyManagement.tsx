@@ -40,14 +40,7 @@ const KeyManagement = () => {
         setAdminKey("");
     }
 
-    const onVerifyOperator = async (key: string): Promise<boolean> => {
-        const stored = sessionStorage.getItem("operatorKeys");
-        const keys: string[] = stored ? JSON.parse(stored) : [];
-    
-        if (keys.includes(key)) {
-            return false;
-        }
-
+    const onVerifyOperator = async (key: string): Promise<boolean> => {    
         return await contract.hasRole(OPERATOR_ROLE, key);
     }
 
@@ -55,8 +48,9 @@ const KeyManagement = () => {
         const stored = sessionStorage.getItem("operatorKeys");
         const keys: string[] = stored ? JSON.parse(stored) : [];
 
-        keys.push(operatorKey);
-        sessionStorage.setItem("operatorKeys", JSON.stringify(keys));
+        if (keys.includes(operatorKey)) {
+            return false;
+        }
 
         const ownerAddress = sessionStorage.getItem("adminKey");
         if (!ownerAddress) {
@@ -66,7 +60,11 @@ const KeyManagement = () => {
         const ownerSigner = await provider.getSigner(ownerAddress);
 
         return contract.connect(ownerSigner).addOperator(operatorKey)
-            .then(() => true)
+            .then(() => {
+                keys.push(operatorKey);
+                sessionStorage.setItem("operatorKeys", JSON.stringify(keys));
+                return true;
+            })
             .catch((error: Error) => {
                 console.error(`An error occurred during submitting an operator: ${error}`);
                 return false;
@@ -74,7 +72,30 @@ const KeyManagement = () => {
     }
 
     const onRevokeOperator = async () => {
-        
+        const stored = sessionStorage.getItem("operatorKeys");
+        const keys: string[] = stored ? JSON.parse(stored) : [];
+
+        if (!keys.includes(operatorKey)) {
+            return false;
+        }
+
+        const ownerAddress = sessionStorage.getItem("adminKey");
+        if (!ownerAddress) {
+            throw new Error("Admin key is missing");
+        }
+
+        const ownerSigner = await provider.getSigner(ownerAddress);
+
+        return contract.connect(ownerSigner).revokeOperator(operatorKey)
+            .then(() => {
+                const updatedKeys = keys.filter(key => key !== operatorKey);
+                sessionStorage.setItem("operatorKeys", JSON.stringify(updatedKeys));
+                return true;
+            })
+            .catch((error: Error) => {
+                console.error(`An error occurred during revoking the operator: ${error}`);
+                return false;
+            });
     }
     
     return (
