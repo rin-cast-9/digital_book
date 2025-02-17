@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import LabeledInput from "./LabeledInput";
 import { BookManagerContract, DEFAULT_ADMIN_ROLE } from "../../constants/blockchain";
 import { InputRole } from "../../constants/InputRole";
+import { useAdmin } from "../../contexts/AdminContext";
 
 
 const KeyVerification = () => {
-    const [adminKey, setAdminKey] = useState("");
-    const [isAdminVerified, setIsAdminVerified] = useState(false);
+    const { adminKey, setAdminKey, setIsAdminVerified, onSubmitAdmin, onRevokeAdmin } = useAdmin();
 
     useEffect(() => {
         if (sessionStorage.getItem("adminKey")) {
@@ -16,17 +16,6 @@ const KeyVerification = () => {
 
     const onVerifyAdmin = async (key: string): Promise<boolean> => {
         return await BookManagerContract.hasRole(DEFAULT_ADMIN_ROLE, key);
-    }
-
-    const onSubmitAdmin = () => {
-        sessionStorage.setItem("adminKey", adminKey);
-        setIsAdminVerified(true);
-    }
-
-    const onRevokeAdmin = () => {
-        sessionStorage.removeItem("adminKey");
-        setIsAdminVerified(false);
-        setAdminKey("");
     }
 
     return (
@@ -46,4 +35,4 @@ const KeyVerification = () => {
     )
 }
 
-export default KeyVerification
+export default KeyVerification;

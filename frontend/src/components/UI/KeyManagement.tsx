@@ -2,16 +2,12 @@ import { useEffect, useState } from 'react'
 import LabeledInput from './LabeledInput';
 import { InputRole } from '../../constants/InputRole';
 import { BookManagerContract, OPERATOR_ROLE, provider } from '../../constants/blockchain';
+import { useAdmin } from '../../contexts/AdminContext';
 
 const KeyManagement = () => {
     const [operatorKey, setOperatorKey] = useState("");
-    const [isAdminVerified, setIsAdminVerified] = useState(false);
-
-    useEffect(() => {
-        if (sessionStorage.getItem("adminKey")) {
-            setIsAdminVerified(true);
-        }
-    }, []);
+    
+    const { isAdminVerified } = useAdmin();
 
     const onVerifyOperator = async (key: string): Promise<boolean> => {    
         return await BookManagerContract.hasRole(OPERATOR_ROLE, key);
@@ -36,6 +32,7 @@ const KeyManagement = () => {
             .then(() => {
                 keys.push(operatorKey);
                 sessionStorage.setItem("operatorKeys", JSON.stringify(keys));
+                console.log(`the key ${operatorKey} has been added to the blockchain.`);
                 return true;
             })
             .catch((error: Error) => {
@@ -63,6 +60,7 @@ const KeyManagement = () => {
             .then(() => {
                 const updatedKeys = keys.filter(key => key !== operatorKey);
                 sessionStorage.setItem("operatorKeys", JSON.stringify(updatedKeys));
+                console.log(`the key ${operatorKey} has been removed from the blockchain.`);
                 return true;
             })
             .catch((error: Error) => {

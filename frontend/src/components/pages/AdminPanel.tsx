@@ -1,9 +1,12 @@
+import { AdminProvider } from "../../contexts/AdminContext";
 import KeyTabs from "../UI/KeyTabs";
 
 const AdminPanel = () => {
     return (
         <>
-            <KeyTabs />
+            <AdminProvider>
+                <KeyTabs />
+            </AdminProvider>
         </>
     )
 };
