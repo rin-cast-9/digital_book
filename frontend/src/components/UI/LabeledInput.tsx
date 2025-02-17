@@ -1,5 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
+import { InputRole } from "../../constants/InputRole";
 
 interface LabeledInputProps {
     label: string;
@@ -11,6 +12,7 @@ interface LabeledInputProps {
     disabled?: boolean;
     disableOnSuccess?: boolean;
     persistStorageKey?: string;
+    inputRole: InputRole
 }
 
 const LabeledInput: React.FC<LabeledInputProps> = ({
@@ -23,10 +25,13 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
     disabled = false,
     disableOnSuccess = false,
     persistStorageKey,
+    inputRole
 }) => {
 
     const [feedback, setFeedback] = useState({ message: "", style: "" });
     const [isDisabled, setIsDisabled] = useState(false);
+
+    const isManager = (inputRole === InputRole.MANAGER) ? true : false;
 
     useEffect(() => {
         if (persistStorageKey) {
@@ -36,7 +41,7 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
                 setIsDisabled(true);
                 onChange(stored);
 
-                setFeedback({ message: "Key verified from session.", style: "text-success" });
+                setFeedback({ message: "Th key has been verified from session.", style: "text-success" });
             }
         }
     }, [persistStorageKey, onChange]);
@@ -44,15 +49,27 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
     const handleSubmit = () => {
         onVerify(value)
             .then((exists: boolean) => {
-                if (!exists) {
-                    setFeedback({ message: "Key successfully verified.", style: "text-success" });
+                const valid = (exists === isManager) ? false : true; // isManager XOR exists
+                if (valid) {
+                    if (isManager) {
+                        setFeedback({ message: "The key has been successfully registered.", style: "text-success" });
+                    }
+                    else {
+                        setFeedback({ message: "The key has been successfully stored.", style: "text-success" });
+                    }
+
                     onSubmit();
                     if (disableOnSuccess) {
                         setIsDisabled(true);
                     }
                 }
                 else {
-                    setFeedback({ message: "The provided key is not valid.", style: "text-danger" });
+                    if (isManager) {
+                        setFeedback({ message: "The provided key is already registered.", style: "text-danger" });
+                    }
+                    else {
+                        setFeedback({ message: "The provided key doesn't exist.", style: "text-danger" });
+                    }
                 }
             })
             .catch(() => {
@@ -62,16 +79,27 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
 
     const handleRevoke = async () => {
         onVerify(value)
-            .then((exists: boolean) => {
-                if (exists) {
-                    setFeedback({ message: "Key successfully revoked.", style: "text-info" });
+            .then((valid: boolean) => {
+                if (valid) {
+                    if (isManager) {
+                        setFeedback({ message: "The key has been successfully revoked.", style: "text-info" });
+                    }
+                    else {
+                        setFeedback({ message: "The key has been successfully removed.", style: "text-info" });
+                    }
+
                     onRevoke();
                     if (disableOnSuccess) {
                         setIsDisabled(false);
                     }
                 }
                 else {
-                    setFeedback({ message: "The key is not assigend to the role.", style: "text-danger" });
+                    if (isManager) {
+                        setFeedback({ message: "The key is not assigend to the role.", style: "text-danger" });
+                    }
+                    else {
+                        setFeedback({ message: "The key is not found in the storage.", style: "text-danger" });
+                    }
                 }
             })
             .catch(() => {
@@ -95,14 +123,14 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
                     onClick={handleSubmit}
                     disabled={disabled || isDisabled}
                 >
-                    Submit
+                    {inputRole === InputRole.MANAGER ? "Submit" : "Store"}
                 </button>
                 <button 
                     className="btn btn-outline-danger"
                     onClick={handleRevoke}
                     disabled={disabled || !Boolean(value)}
                 >
-                    Revoke
+                    {inputRole === InputRole.MANAGER ? "Revoke" : "Remove"}
                 </button>
             </div>
             <div className="text-start" style={{ minHeight: "1.5rem" }}>

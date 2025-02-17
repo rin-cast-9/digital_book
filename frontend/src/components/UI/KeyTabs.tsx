@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import KeyManagement from './KeyManagement';
+import KeyVerification from './KeyVerification';
 
 const KeyTabs = () => {
     const [activeTab, setActiveTab] = useState("verification");
@@ -7,7 +8,7 @@ const KeyTabs = () => {
     return (
         <>
             <nav
-                className="nav nav-tabs mt-auto"
+                className="nav nav-tabs justify-content-center"
                 id="nav-tab"
                 role="tablist"
             >
@@ -38,7 +39,7 @@ const KeyTabs = () => {
                 <div
                     className={`tab-pane fade mt-2 ${activeTab === "verification" ? "show active" : ""}`}
                 >
-                    Key verification
+                    <KeyVerification />
                 </div>
             </div>
         </>
