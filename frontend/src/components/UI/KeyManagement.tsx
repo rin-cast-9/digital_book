@@ -8,9 +8,10 @@ import { useManager } from '../../contexts/ManagerContext';
 const KeyManagement = () => {
     const [operatorKey, setOperatorKey] = useState("");
     const [userKey, setUserKey] = useState("");
+    const [managerKey, setManagerKey] = useState("");
     
     const { isAdminVerified } = useAdmin();
-    const { isManagerVerified, managerKey, setManagerKey } = useManager();
+    const { isManagerVerified, onRevokeManager } = useManager();
 
     const onVerifyOperator = async (key: string): Promise<boolean> => {    
         return await BookManagerContract.hasRole(OPERATOR_ROLE, key);
@@ -68,11 +69,13 @@ const KeyManagement = () => {
             });
     }
 
-    const onRevokeManager = async () => {
+    const revokeAndRemoveManager = async () => {
         const ownerAddress = sessionStorage.getItem("adminKey");
         if (!ownerAddress) {
             throw new Error("Admin key is missing");
         }
+
+        onRevokeManager(); // used to prevent a bug which would allow a manager key to remain in session storage after manager key has been revoked from the system
 
         const ownerSigner = await provider.getSigner(ownerAddress);
 
@@ -140,7 +143,7 @@ const KeyManagement = () => {
                 value={managerKey}
                 onChange={setManagerKey}
                 onSubmit={onSubmitManager}
-                onRevoke={onRevokeManager}
+                onRevoke={revokeAndRemoveManager}
                 onVerify={onVerifyManager}
                 disabled={!isAdminVerified}
                 inputRole={InputRole.MANAGER}

@@ -41,10 +41,13 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
                 setIsDisabled(true);
                 onChange(stored);
 
-                setFeedback({ message: "Th key has been verified from session.", style: "text-success" });
+                setFeedback({ message: "The key has been verified from session.", style: "text-success" });
+            }
+            else {
+                setIsDisabled(false);
             }
         }
-    }, [persistStorageKey, onChange]);
+    }, [persistStorageKey, onChange, value]);
 
     const handleSubmit = () => {
         onVerify(value)

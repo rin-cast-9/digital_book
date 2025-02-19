@@ -16,9 +16,15 @@ const KeyVerification = () => {
         if (sessionStorage.getItem("adminKey")) {
             setIsAdminVerified(true);
         }
+        else {
+            setIsAdminVerified(false);
+        }
 
         if (sessionStorage.getItem("managerKey")) {
             setIsManagerVerified(true);
+        }
+        else {
+            setIsManagerVerified(false);
         }
     }, []);
 
