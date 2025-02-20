@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import LabeledInput from "./LabeledInput";
+import LabeledSubmitRevokeInput from "./LabeledSubmitRevokeInput";
 import { BookManagerContract, DEFAULT_ADMIN_ROLE, MANAGER_ROLE, OPERATOR_ROLE, USER_ROLE } from "../../constants/blockchain";
 import { InputRole } from "../../constants/InputRole";
 import { useAdmin } from "../../contexts/AdminContext";
@@ -64,7 +64,7 @@ const KeyVerification = () => {
 
     return (
         <>
-            <LabeledInput
+            <LabeledSubmitRevokeInput
                 label="Admin key"
                 value={adminKey}
                 onChange={setAdminKey}
@@ -76,7 +76,7 @@ const KeyVerification = () => {
                 inputRole={InputRole.VERIFIER}
             />
 
-            <LabeledInput
+            <LabeledSubmitRevokeInput
                 label="Operator key"
                 value={operatorKey}
                 onChange={setOperatorKey}
@@ -88,7 +88,7 @@ const KeyVerification = () => {
                 inputRole={InputRole.VERIFIER}
             />
 
-            <LabeledInput
+            <LabeledSubmitRevokeInput
                 label="Manager key"
                 value={managerKey}
                 onChange={setManagerKey}
@@ -100,7 +100,7 @@ const KeyVerification = () => {
                 inputRole={InputRole.VERIFIER}
             />
 
-            <LabeledInput
+            <LabeledSubmitRevokeInput
                 label="User key"
                 value={userKey}
                 onChange={setUserKey}

@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import { InputRole } from "../../constants/InputRole";
 
-interface LabeledInputProps {
+interface LabeledSubmitRevokeInputProps {
     label: string;
     value: string;
     onChange: (v: string) => void;
@@ -15,7 +15,7 @@ interface LabeledInputProps {
     inputRole: InputRole
 }
 
-const LabeledInput: React.FC<LabeledInputProps> = ({
+const LabeledSubmitRevokeInput: React.FC<LabeledSubmitRevokeInputProps> = ({
     label,
     value,
     onChange,
@@ -148,4 +148,4 @@ const LabeledInput: React.FC<LabeledInputProps> = ({
     );
 };
 
-export default LabeledInput;
+export default LabeledSubmitRevokeInput;

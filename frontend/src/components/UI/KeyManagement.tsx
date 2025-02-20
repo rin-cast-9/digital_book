@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import LabeledInput from './LabeledInput';
+import LabeledSubmitRevokeInput from './LabeledSubmitRevokeInput';
 import { InputRole } from '../../constants/InputRole';
 import { BookManagerContract, MANAGER_ROLE, OPERATOR_ROLE, provider, USER_ROLE } from '../../constants/blockchain';
 import { useAdmin } from '../../contexts/AdminContext';
@@ -127,7 +127,7 @@ const KeyManagement = () => {
     
     return (
         <>
-            <LabeledInput
+            <LabeledSubmitRevokeInput
                 label="Operator key"
                 value={operatorKey}
                 onChange={setOperatorKey}
@@ -138,7 +138,7 @@ const KeyManagement = () => {
                 inputRole={InputRole.MANAGER}
             />
 
-            <LabeledInput
+            <LabeledSubmitRevokeInput
                 label="Manager key"
                 value={managerKey}
                 onChange={setManagerKey}
@@ -149,7 +149,7 @@ const KeyManagement = () => {
                 inputRole={InputRole.MANAGER}
             />
 
-            <LabeledInput
+            <LabeledSubmitRevokeInput
                 label="User key"
                 value={userKey}
                 onChange={setUserKey}
