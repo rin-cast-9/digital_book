@@ -12,9 +12,6 @@ const BookCatalog = () => {
         const fetchBooks = async () => {
             try {
                 const fetchedBooks = await getBooksFromBlockchain();
-                // fetchedBooks?.forEach((e, i) => {
-                //     console.log(`${i}: ${e}`);
-                // });
 
                 const serializedBooks = fetchedBooks?.map(book => ({
                     name: book.name,
@@ -24,12 +21,9 @@ const BookCatalog = () => {
                     yearPublished: book.yearPublished.toString(),
                     isAdopted: book.isAdopted,
                 }));
-                // serializedBooks?.forEach((e, i) => {
-                //     console.log(`${i}: ${e}`);
-                // });
 
                 setBooks(fetchedBooks);
-                localStorage.setItem("books", JSON.stringify(serializedBooks, (key, value) => {
+                localStorage.setItem("books", JSON.stringify(serializedBooks, (_, value) => {
                     if (typeof value === "bigint") {
                         return value.toString();
                     }
@@ -91,7 +85,7 @@ const BookCatalog = () => {
     );
 };
 
-// Mock blockchain call
+
 async function getBooksFromBlockchain(): Promise<Book[] | null> {
     return await BookManagerContract.getBooks();
 }
