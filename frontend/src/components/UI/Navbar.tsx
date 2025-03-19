@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 
 const Navbar = () => {
+    const [isNavOpen, setIsNavOpen] = useState(false);
+
     return (
         <>
             <nav className="navbar navbar-expand-lg navbar-light bg-primary-subtle fixed-top">
@@ -12,12 +15,11 @@ const Navbar = () => {
                     <button
                         className="navbar-toggler"
                         type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#navbarNav"
+                        onClick={() => setIsNavOpen(!isNavOpen)}
                     >
                         <span className="navbar-toggler-icon"></span>
                     </button>
-                    <div className="collapse navbar-collapse" id="navbarNav">
+                    <div className={`collapse navbar-collapse ${isNavOpen ? "show" : ""}`} id="navbarNav">
                         <ul className="navbar-nav">
                             <li className="nav-item">
                                 <Link className="nav-link" to="/books">

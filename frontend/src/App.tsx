@@ -1,4 +1,4 @@
-import { Route, Routes, BrowserRouter } from "react-router-dom";
+import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
 import "./styles/App.css";
 import AdminPanel from "./components/pages/AdminPanel";
 import AddBook from "./components/pages/AddBook";
@@ -14,6 +14,7 @@ const App = () => {
                     <Route element={<Layout />}>
                         <Route path="/adminPanel" element={<AdminPanel />} />
                         <Route path="/addBook" element={<AddBook />} />
+                        <Route path="/" element={<Navigate to="/books" replace />} />
                         <Route path="/books" element={<BookCatalog />} />
                         <Route path="/book/:id" element={<BookDetails />} />
                     </Route>

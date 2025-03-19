@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom"
 import { Book } from "../../constants/Book";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
@@ -9,7 +9,7 @@ import { BookManagerContract, provider } from "../../constants/blockchain";
 
 const BookDetails = () => {
     const { id } = useParams<{ id: string }> ();
-    const books: Book[] = JSON.parse(localStorage.getItem("books") || "[]").map((book: Book) => ({
+    const books: Book[] = JSON.parse(sessionStorage.getItem("books") || "[]").map((book: Book) => ({
         ...book,
         yearPublished: Number(book.yearPublished),
     }));
