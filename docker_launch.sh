@@ -12,4 +12,4 @@ sed 's|{{PROXY_TARGET}}|http://blockchain:8545|' ./nginx/nginx.conf.template > .
 
 echo "Launching Docker containers..."
 
-$COMPOSE_CMD up -d
+$COMPOSE_CMD up --build
