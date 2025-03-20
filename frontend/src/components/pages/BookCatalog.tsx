@@ -77,28 +77,6 @@ const BookCatalog = () => {
         }
     }, []);
 
-    // useEffect(() => {
-    //     const storedBooks = localStorage.getItem("books");
-
-    //     if (storedBooks && storedBooks !== "null") {
-    //         setBooks(JSON.parse(storedBooks).map((book: Book) => ({
-    //             ...book,
-    //             yearPublished: Number(book.yearPublished),
-    //         })));
-
-    //         setLoading(false);
-    //     }
-    //     else {
-    //         fetchBooks();
-    //     }
-
-    //     BookManagerContract.on("BookAdded", handleBookAddedEvent);
-
-    //     return () => {
-    //         BookManagerContract.off("BookAdded", handleBookAddedEvent);
-    //     };
-    // }, []);
-
     if (loading) {
         return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }

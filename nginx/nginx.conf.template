@@ -1,4 +1,4 @@
-events { 
+events {
     worker_connections 1024;
 }
 
@@ -6,7 +6,7 @@ http {
     server {
         listen 8546;
         location / {
-            proxy_pass http://blockchain:8545;
+            proxy_pass {{PROXY_TARGET}};
             proxy_hide_header Access-Control-Allow-Origin;
             add_header Access-Control-Allow-Origin $http_origin;
             add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";

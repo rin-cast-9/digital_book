@@ -20,6 +20,8 @@ services:
       - blockchain
     volumes:
       - contract-artifacts:/app/frontend/src/artifacts:ro
+    environment:
+      - VITE_DOCKER=true
 
   proxy:
     image: nginx:stable-alpine

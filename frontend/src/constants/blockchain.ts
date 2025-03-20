@@ -1,5 +1,12 @@
 import { ethers } from "ethers";
-import { abi as BookManagerAbi } from "../../../blockchain/artifacts/contracts/BookManager.sol/BookManager.json";
+
+// import { abi as BookManagerAbi } from "../artifacts/contracts/BookManager.sol/BookManager.json";
+
+const modules = import.meta.env.VITE_DOCKER
+    ? import.meta.glob("../artifacts/contracts/BookManager.sol/BookManager.json", { eager: true })
+    : import.meta.glob("../../../blockchain/artifacts/contracts/BookManager.sol/BookManager.json", { eager: true });
+
+const BookManagerAbi = modules[Object.keys(modules)[0]]?.abi;
 
 const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
