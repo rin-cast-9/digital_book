@@ -153,6 +153,106 @@ describe("BookManager", () => {
 
             await expect(bookManager.connect(userAccount).adoptBook(0)).to.be.revertedWith("The book is already adopted");
         });
+
+        it("Should return the correct range", async () => {
+            const numberOfBooks = 6;
+
+            let books = [];
+
+            for (let i = 0; i < numberOfBooks; ++i) {
+                books.push({
+                    name: `Book${i}`,
+                    publisher: `Publisher${i}`,
+                    publisherCity: `PublisherCity${i}`,
+                    authors: [`Author${i * 3}`, `Author${i * 3 + 1}`, `Author${i * 3 + 2}`],
+                    yearPublished: 2025,
+                });
+            }
+
+            const years = books.map((b) => b.yearPublished);
+            const names = books.map((b) => b.name);
+            const publishers = books.map((b) => b.publisher);
+            const publisherCities = books.map((b) => b.publisherCity);
+            const authors = books.map((b) => b.authors);
+
+            for (let i = 0; i < numberOfBooks; ++i) {
+                await bookManager.connect(operatorAccount).addBook(years[i], names[i], publishers[i], publisherCities[i], authors[i]);
+            }
+
+            const returnedBooksRaw = await bookManager.getBooksInRange(3, 6);
+
+            const returnedBooks = returnedBooksRaw.map((b) => ({
+                name: b[0],
+                publisher: b[1],
+                publisherCity: b[2],
+                authors: b[3],
+                yearPublished: Number(b[4]),
+                isAdopted: b[5],
+            }));
+
+            for (let i = 3; i < 6; ++i) {
+                expect(returnedBooks[i - 3]).to.deep.equal({
+                    ...books[i],
+                    isAdopted: false
+                });
+            }
+        });
+
+        it("Should fail at the incorrect range", async () => {
+            const numberOfBooks = 6;
+
+            let books = [];
+
+            for (let i = 0; i < numberOfBooks; ++i) {
+                books.push({
+                    name: `Book${i}`,
+                    publisher: `Publisher${i}`,
+                    publisherCity: `PublisherCity${i}`,
+                    authors: [`Author${i * 3}`, `Author${i * 3 + 1}`, `Author${i * 3 + 2}`],
+                    yearPublished: 2025,
+                });
+            }
+
+            const years = books.map((b) => b.yearPublished);
+            const names = books.map((b) => b.name);
+            const publishers = books.map((b) => b.publisher);
+            const publisherCities = books.map((b) => b.publisherCity);
+            const authors = books.map((b) => b.authors);
+
+            for (let i = 0; i < numberOfBooks; ++i) {
+                await bookManager.connect(operatorAccount).addBook(years[i], names[i], publishers[i], publisherCities[i], authors[i]);
+            }
+
+            expect(bookManager.getBooksInRange(2, 2)).to.be.revertedWith("Invalid range: start must be less than end");
+        });
+        
+        it("Should fail at the out of bounds range", async () => {
+            const numberOfBooks = 6;
+
+            let books = [];
+
+            for (let i = 0; i < numberOfBooks; ++i) {
+                books.push({
+                    name: `Book${i}`,
+                    publisher: `Publisher${i}`,
+                    publisherCity: `PublisherCity${i}`,
+                    authors: [`Author${i * 3}`, `Author${i * 3 + 1}`, `Author${i * 3 + 2}`],
+                    yearPublished: 2025,
+                });
+            }
+
+            const years = books.map((b) => b.yearPublished);
+            const names = books.map((b) => b.name);
+            const publishers = books.map((b) => b.publisher);
+            const publisherCities = books.map((b) => b.publisherCity);
+            const authors = books.map((b) => b.authors);
+
+            for (let i = 0; i < numberOfBooks; ++i) {
+                await bookManager.connect(operatorAccount).addBook(years[i], names[i], publishers[i], publisherCities[i], authors[i]);
+            }
+
+            expect(bookManager.getBooksInRange(3, 7)).to.be.revertedWith("Range exceeds total books");
+        });
     });
 
     describe("Events", () => {

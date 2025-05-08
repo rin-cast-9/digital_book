@@ -2,78 +2,76 @@ import { useEffect, useState } from "react";
 import { BookManagerContract } from "../../constants/blockchain";
 import { useNavigate } from "react-router-dom";
 import { Book } from "../../constants/Book";
-import { BigNumberish } from "ethers";
 
 const BookCatalog = () => {
     const [books, setBooks] = useState<Book[] | null>(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const fetchBooks = () => {
-        BookManagerContract.getBooks()
-            .then((fetchedBooks) => {
-                const serializedBooks = fetchedBooks.map((book: Book) => ({
-                    name: book.name,
-                    publisher: book.publisher,
-                    publisherCity: book.publisherCity,
-                    authors: book.authors,
-                    yearPublished: book.yearPublished.toString(),
-                    isAdopted: book.isAdopted,
-                }));
+    const fetchBooks = (isSessionStorageEmpty: boolean) => {
+        if (isSessionStorageEmpty) {
+            fetchBooksAnew();
+        }
+        else {
+            syncSessionStorage();
+        }
 
-                setBooks(fetchedBooks);
-
-                sessionStorage.setItem("books", JSON.stringify(serializedBooks));
-            })
-            .catch(console.error);
-        
         setLoading(false);
-    };
-
-    const parseBook = (proxyObject: any): Book => {
-        return {
-            name: proxyObject[0] as string,
-            publisher: proxyObject[1] as string,
-            publisherCity: proxyObject[2] as string,
-            authors: Array.isArray(proxyObject[3]) ? proxyObject[3].map(String) : [],
-            yearPublished: BigInt(proxyObject[4]),
-            isAdopted: Boolean(proxyObject[5]),
-        };
     }
 
-    const handleBookAddedEvent = (
-        bookId: BigNumberish,
-        addedBy: string,
-        timestamp: BigNumberish
-    ) => {
-        BookManagerContract.getBook(bookId)
-            .then((fetchedBook: any) => {
-                const parsedBook = parseBook(fetchedBook);
-                console.log(`parsedBook: ${parsedBook}`);
+    const fetchBooksAnew = async () => {
+        const fetchedBooks = await BookManagerContract.getBooks().catch(console.error);
+        const serializedBooks = fetchedBooks.map(serializeBook);
 
-                const serializedBook = {
-                    ...parsedBook,
-                    authors: parsedBook.authors,
-                    yearPublished: parsedBook.yearPublished.toString(),
-                };
-                console.log(`serializedBook: ${serializedBook}`);
+        sessionStorage.setItem("books", JSON.stringify(serializedBooks));
+        setBooks(fetchedBooks);
+    }
 
-                const existingBooks = JSON.parse(sessionStorage.getItem("books") || "[]");
-                existingBooks.push(serializedBook);
-                sessionStorage.setItem("books", JSON.stringify(existingBooks));
+    const syncSessionStorage = async () => {
+        const localBooksRaw = sessionStorage.getItem("books")!
+        const localBooks = JSON.parse(localBooksRaw).map(parseBook);
+        const localLength = localBooks.length;
 
-                setBooks(prevBooks => (prevBooks ? [...prevBooks, parsedBook] : [parsedBook]));
-            })
-            .catch(console.error);
-    };
+        const onChainLength: number = await BookManagerContract.getLength().catch(console.error);
+
+        if (localLength >= onChainLength) {
+            return;
+        }
+        
+        const fetchedBooks = await BookManagerContract.getBooksInRange(localLength, onChainLength).catch(console.error);
+        const serializedBooks = fetchedBooks.map(serializeBook);
+
+        const updatedBooks = [...localBooks, ...fetchedBooks];
+        setBooks(updatedBooks);
+
+        const allSerialized = [...localBooks.map(serializeBook), ...serializedBooks];
+        sessionStorage.setItem("books", JSON.stringify(allSerialized));
+    }
+
+    const parseBook = (obj: any): Book => ({
+        name: obj.name,
+        publisher: obj.publisher,
+        publisherCity: obj.publisherCity,
+        authors: obj.authors,
+        yearPublished: BigInt(obj.yearPublished),
+        isAdopted: obj.isAdopted,
+    });
+
+    const serializeBook = (book: Book) => ({
+        name: book.name,
+        publisher: book.publisher,
+        publisherCity: book.publisherCity,
+        authors: book.authors,
+        yearPublished: book.yearPublished.toString(),
+        isAdopted: book.isAdopted,
+    });
 
     useEffect(() => {
-        BookManagerContract.on("BookAdded", handleBookAddedEvent);
-
-        fetchBooks();
-
-        return () => {
-            BookManagerContract.off("BookAdded", handleBookAddedEvent);
+        if (sessionStorage.getItem("books")) {
+            fetchBooks(false);
+        }
+        else {
+            fetchBooks(true);
         }
     }, []);
 

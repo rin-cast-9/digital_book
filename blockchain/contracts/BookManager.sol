@@ -19,12 +19,30 @@ contract BookManager is RolesManager {
     event BookAdded(uint256 indexed bookId, address indexed addedBy, uint256 timestamp);
     event BookAdopted(uint256 indexed bookId, address indexed adopter, uint256 timestamp);
 
+    function getLength() external view returns (uint256) {
+        return books.length;
+    }
+
     function getBook(uint256 _bookId) external view returns (Book memory) {
         return books[_bookId];
     }
 
     function getBooks() external view returns (Book[] memory) {
         return books;
+    }
+
+    function getBooksInRange(uint32 start, uint32 end) external view returns (Book[] memory) {
+        require(start < end, "Invalid range: start must be less than end");
+        require(end <= books.length, "Range exceeds total books");
+
+        uint32 length = end - start;
+        Book[] memory result = new Book[](length);
+
+        for (uint32 i = 0; i < length; i ++) {
+            result[i] = books[start + i];
+        }
+
+        return result;
     }
 
     function addBook(
