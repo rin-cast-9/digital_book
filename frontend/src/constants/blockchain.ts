@@ -15,4 +15,5 @@ export const MANAGER_ROLE = "0x241ecf16d79d0f8dbfb92cbc07fe17840425976cf0667f022
 export const USER_ROLE = "0x14823911f2da1b49f045a0929a60b8c1f2a7fc8c06c7284ca3e8ab4e193a08c8";
 
 export const provider = new ethers.JsonRpcProvider(`http://${window.location.hostname}:8545/`);
+
 export const BookManagerContract = new ethers.Contract(CONTRACT_ADDRESS, BookManagerAbi, provider);

@@ -1,129 +1,168 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import LabeledSubmitRevokeInput from './LabeledSubmitRevokeInput';
-import { InputRole } from '../../constants/InputRole';
-import { BookManagerContract, MANAGER_ROLE, OPERATOR_ROLE, provider, USER_ROLE } from '../../constants/blockchain';
-import { useAdmin } from '../../contexts/AdminContext';
-import { useManager } from '../../contexts/ManagerContext';
+import { BookManagerContract, provider } from '../../constants/blockchain';
+import { isAddress, JsonRpcSigner } from 'ethers';
 
 const KeyManagement = () => {
     const [operatorKey, setOperatorKey] = useState("");
-    const [userKey, setUserKey] = useState("");
     const [managerKey, setManagerKey] = useState("");
-    
-    const { isAdminVerified } = useAdmin();
-    const { isManagerVerified, onRevokeManager } = useManager();
+    const [userKey, setUserKey] = useState("");
 
-    const onVerifyOperator = async (key: string): Promise<boolean> => {    
-        return await BookManagerContract.hasRole(OPERATOR_ROLE, key);
+    const submitSuccessMessage = "The key was successfully submitted.";
+    const submitFailMessage = "The key has been already registered before.";
+    const revokeSuccessMessage = "The key has been successfully revoked.";
+    const revokeFailMessage = "The key is not assigned to the role.";
+
+    const submitButtonText = "Submit";
+    const revokeButtonText = "Revoke";
+
+    const verifyKey = (key: string) => {
+        if (!isAddress(key)) {
+            throw new Error("Invalid etherium address");
+        }
     }
 
-    const onSubmitOperator = async () => {
-        const ownerAddress = sessionStorage.getItem("adminKey");
-        if (!ownerAddress) {
-            throw new Error("Admin key is missing");
+    const getOwnerSigner = async (sessionStorageKey: string): Promise<JsonRpcSigner> => {
+        const key = sessionStorage.getItem(sessionStorageKey);
+
+        if (!key) {
+            throw new Error("Insufficient authority to perform the operation");
         }
 
-        const ownerSigner = await provider.getSigner(ownerAddress);
-
-        return BookManagerContract.connect(ownerSigner).addOperator(operatorKey)
-            .then(() => true)
-            .catch((error: Error) => {
-                console.error(`An error occurred during submitting an operator: ${error}`);
-                return false;
-            });
+        return await provider.getSigner(key);
     }
 
-    const onRevokeOperator = async () => {
-        const ownerAddress = sessionStorage.getItem("adminKey");
-        if (!ownerAddress) {
-            throw new Error("Admin key is missing");
+    const onSubmitOperatorKey = async (): Promise<boolean> => {
+        verifyKey(operatorKey);
+
+        const ownerSigner = await getOwnerSigner("adminKey");
+
+        try {
+            const tx = await BookManagerContract
+                .connect(ownerSigner)
+                .addOperator(operatorKey);
+                
+            const receipt = await tx.wait();
+
+            return receipt.status === 1;
         }
-
-        const ownerSigner = await provider.getSigner(ownerAddress);
-
-        return BookManagerContract.connect(ownerSigner).revokeOperator(operatorKey)
-            .then(() => true)
-            .catch((error: Error) => {
-                console.error(`An error occurred during revoking the operator: ${error}`);
-                return false;
-            });
-    }
-
-    const onVerifyManager = async (key: string): Promise<boolean> => {
-        return await BookManagerContract.hasRole(MANAGER_ROLE, key);
-    }
-
-    const onSubmitManager = async () => {
-        const ownerAddress = sessionStorage.getItem("adminKey");
-        if (!ownerAddress) {
-            throw new Error("Admin key is missing");
-        }
-
-        const ownerSigner = await provider.getSigner(ownerAddress);
-
-        return BookManagerContract.connect(ownerSigner).addManager(managerKey)
-            .then(() => true)
-            .catch((error: Error) => {
-                console.error(`An error occurred during submitting a manager: ${error}`);
-                return false;
-            });
-    }
-
-    const revokeAndRemoveManager = async () => {
-        const ownerAddress = sessionStorage.getItem("adminKey");
-        if (!ownerAddress) {
-            throw new Error("Admin key is missing");
-        }
-
-        onRevokeManager(); // used to prevent a bug which would allow a manager key to remain in session storage after manager key has been revoked from the system
-
-        const ownerSigner = await provider.getSigner(ownerAddress);
-
-        return BookManagerContract.connect(ownerSigner).revokeManager(managerKey)
-            .then(() => true)
-            .catch((error: Error) => {
-                console.error(`An error occurred during revoking the operator: ${error}`);
-                return false;
-            });
-    }
-
-    const onVerifyUser = async (key: string): Promise<boolean> => {
-        return await BookManagerContract.hasRole(USER_ROLE, key);
-    }
-
-    const onSubmitUser = async () => {
-        const managerAddress = sessionStorage.getItem("managerKey");
-        if (!managerAddress) {
-            throw new Error("Manager key is missing");
-        }
-
-        const managerSigner = await provider.getSigner(managerAddress);
-
-        return BookManagerContract.connect(managerSigner).addUser(userKey)
-            .then(() => true)
-            .catch((error: Error) => {
-                console.error(`An error occurred during submitting a user: ${error}`);
-                return false;
-            });
-    }
-
-    const onRevokeUser = async () => {
-        const managerAddress = sessionStorage.getItem("managerKey");
-        if (!managerAddress) {
-            throw new Error("Manager key is missing");
-        }
-
-        const managerSigner = await provider.getSigner(managerAddress);
-
-        return BookManagerContract.connect(managerSigner).revokeUser(userKey)
-        .then(() => true)
-        .catch((error: Error) => {
-            console.error(`An error occurred during revoking the user: ${error}`);
+        catch (error) {
+            console.error(`Error adding operator: ${error}`);
             return false;
-        });
+        }
     }
 
+    const onRevokeOperatorKey = async (): Promise<boolean> => {
+        const ownerSigner = await getOwnerSigner("adminKey");
 
+        try {
+            const tx = await BookManagerContract
+                .connect(ownerSigner)
+                .revokeOperator(operatorKey);
+
+            const receipt = await tx.wait();
+
+            const status = receipt.status === 1;
+
+            if (status && sessionStorage.getItem("operatorKey") === operatorKey) {
+                sessionStorage.removeItem("operatorKey");
+            }
+
+            return status;
+        }
+        catch (error) {
+            console.error(`Error revoking operator: ${error}`);
+            return false;
+        }
+    }
+
+    const onSubmitManagerKey = async (): Promise<boolean> => {
+        verifyKey(managerKey);
+
+        const ownerSigner = await getOwnerSigner("adminKey");
+
+        try {
+            const tx = await BookManagerContract
+                .connect(ownerSigner)
+                .addManager(managerKey);
+            
+            const receipt = await tx.wait();
+
+            return receipt.status === 1;
+        }
+        catch (error) {
+            console.error(`Error adding manager: ${error}`);
+            return false;
+        }
+    }
+
+    const onRevokeManagerKey = async (): Promise<boolean> => {
+        const ownerSigner = await getOwnerSigner("adminKey");
+
+        try {
+            const tx = await BookManagerContract
+                .connect(ownerSigner)
+                .revokeManager(managerKey);
+
+            const receipt = await tx.wait();
+
+            const status = receipt.status === 1;
+
+            if (status && sessionStorage.getItem("managerKey")) {
+                sessionStorage.removeItem("managerKey");
+            }
+
+            return status;
+        }
+        catch (error) {
+            console.error(`Error revoking manager: ${error}`);
+            return false;
+        }
+    }
+
+    const onSubmitUserKey = async (): Promise<boolean> => {
+        verifyKey(userKey);
+
+        const ownerSigner = await getOwnerSigner("managerKey");
+
+        try {
+            const tx = await BookManagerContract
+                .connect(ownerSigner)
+                .addUser(userKey);
+
+            const receipt = await tx.wait();
+
+            return receipt.status === 1;
+        }
+        catch (error) {
+            console.error(`Error adding user: ${error}`);
+            return false;
+        }
+    }
+
+    const onRevokeUserKey = async (): Promise<boolean> => {
+        const ownerSigner = await getOwnerSigner("managerKey");
+
+        try {
+            const tx = await BookManagerContract
+                .connect(ownerSigner)
+                .revokeUser(userKey);
+
+            const receipt = await tx.wait();
+
+            const status = receipt.status === 1;
+
+            if (status && sessionStorage.getItem("userKey")) {
+                sessionStorage.removeItem("userKey");
+            }
+
+            return status;
+        }
+        catch (error) {
+            console.error(`Error revoking user: ${error}`);
+            return false;
+        }
+    }
     
     return (
         <>
@@ -131,33 +170,48 @@ const KeyManagement = () => {
                 label="Operator key"
                 value={operatorKey}
                 onChange={setOperatorKey}
-                onSubmit={onSubmitOperator}
-                onRevoke={onRevokeOperator}
-                onVerify={onVerifyOperator}
-                disabled={!isAdminVerified}
-                inputRole={InputRole.MANAGER}
+                onSubmit={onSubmitOperatorKey}
+                onRevoke={onRevokeOperatorKey}
+                disabled={!sessionStorage.getItem("adminKey")?.trim()}
+                disableOnSuccess={false}
+                submitSuccessMessage={submitSuccessMessage}
+                submitFailMessage={submitFailMessage}
+                revokeSuccessMessage={revokeSuccessMessage}
+                revokeFailMessage={revokeFailMessage}
+                submitButtonText={submitButtonText}
+                revokeButtonText={revokeButtonText}
             />
 
             <LabeledSubmitRevokeInput
                 label="Manager key"
                 value={managerKey}
                 onChange={setManagerKey}
-                onSubmit={onSubmitManager}
-                onRevoke={revokeAndRemoveManager}
-                onVerify={onVerifyManager}
-                disabled={!isAdminVerified}
-                inputRole={InputRole.MANAGER}
+                onSubmit={onSubmitManagerKey}
+                onRevoke={onRevokeManagerKey}
+                disabled={!sessionStorage.getItem("adminKey")?.trim()}
+                disableOnSuccess={false}
+                submitSuccessMessage={submitSuccessMessage}
+                submitFailMessage={submitFailMessage}
+                revokeSuccessMessage={revokeSuccessMessage}
+                revokeFailMessage={revokeFailMessage}
+                submitButtonText={submitButtonText}
+                revokeButtonText={revokeButtonText}
             />
 
             <LabeledSubmitRevokeInput
                 label="User key"
                 value={userKey}
                 onChange={setUserKey}
-                onSubmit={onSubmitUser}
-                onRevoke={onRevokeUser}
-                onVerify={onVerifyUser}
-                disabled={!isManagerVerified}
-                inputRole={InputRole.MANAGER}
+                onSubmit={onSubmitUserKey}
+                onRevoke={onRevokeUserKey}
+                disabled={!sessionStorage.getItem("managerKey")?.trim()}
+                disableOnSuccess={false}
+                submitSuccessMessage={submitSuccessMessage}
+                submitFailMessage={submitFailMessage}
+                revokeSuccessMessage={revokeSuccessMessage}
+                revokeFailMessage={revokeFailMessage}
+                submitButtonText={submitButtonText}
+                revokeButtonText={revokeButtonText}
             />
         </>
     );

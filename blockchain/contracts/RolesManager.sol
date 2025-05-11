@@ -15,26 +15,32 @@ contract RolesManager is AccessControl {
     }
 
     function addOperator(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(!hasRole(OPERATOR_ROLE, account), "Operator already exists");
         grantRole(OPERATOR_ROLE, account);
     }
 
     function revokeOperator(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(hasRole(OPERATOR_ROLE, account), "Operator not found");
         revokeRole(OPERATOR_ROLE, account);
     }
 
     function addManager(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(!hasRole(MANAGER_ROLE, account), "Manager already exists");
         grantRole(MANAGER_ROLE, account);
     }
 
     function revokeManager(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(hasRole(MANAGER_ROLE, account), "Manager not found");
         revokeRole(MANAGER_ROLE, account);
     }
 
     function addUser(address account) public onlyRole(MANAGER_ROLE) {
+        require(!hasRole(USER_ROLE, account), "User already exists");
         grantRole(USER_ROLE, account);
     }
 
     function revokeUser(address account) public onlyRole(MANAGER_ROLE) {
+        require(hasRole(USER_ROLE, account), "User not found");
         revokeRole(USER_ROLE, account);
     }
 

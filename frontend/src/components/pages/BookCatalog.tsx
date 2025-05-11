@@ -35,6 +35,7 @@ const BookCatalog = () => {
         const onChainLength: number = await BookManagerContract.getLength().catch(console.error);
 
         if (localLength >= onChainLength) {
+            setBooks(localBooks);
             return;
         }
         
@@ -67,12 +68,7 @@ const BookCatalog = () => {
     });
 
     useEffect(() => {
-        if (sessionStorage.getItem("books")) {
-            fetchBooks(false);
-        }
-        else {
-            fetchBooks(true);
-        }
+        fetchBooks(!sessionStorage.getItem("books")?.trim());
     }, []);
 
     if (loading) {

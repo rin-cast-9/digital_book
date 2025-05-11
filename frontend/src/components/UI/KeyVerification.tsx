@@ -1,65 +1,155 @@
 import { useEffect, useState } from "react";
 import LabeledSubmitRevokeInput from "./LabeledSubmitRevokeInput";
 import { BookManagerContract, DEFAULT_ADMIN_ROLE, MANAGER_ROLE, OPERATOR_ROLE, USER_ROLE } from "../../constants/blockchain";
-import { InputRole } from "../../constants/InputRole";
-import { useAdmin } from "../../contexts/AdminContext";
-import { useManager } from "../../contexts/ManagerContext";
+import { isAddress } from "ethers";
 
 
 const KeyVerification = () => {
-    const { adminKey, setAdminKey, setIsAdminVerified, onSubmitAdmin, onRevokeAdmin } = useAdmin();
-    const { managerKey, setManagerKey, setIsManagerVerified, onSubmitManager, onRevokeManager } = useManager();
+    const [adminKey, setAdminKey] = useState("");
     const [operatorKey, setOperatorKey] = useState("");
+    const [managerKey, setManagerKey] = useState("");
     const [userKey, setUserKey] = useState("");
 
+    const storeSuccessMessage = "The key was successfully stored.";
+    const storeFailMessage = "The key doesn't exist.";
+    const removeSuccessMessage = "The key was successfully removed.";
+    const removeFailMessage = "There's no such key in the storage.";
+
+    const submitButtonText = "Store";
+    const revokeButtonText = "Remove";
+
+    const [isRestoredAdmin, setIsRestoredAdmin] = useState(false);
+    const [isRestoredOperator, setIsRestoredOperator] = useState(false);
+    const [isRestoredManager, setIsRestoredManager] = useState(false);
+    const [isRestoredUser, setIsRestoredUser] = useState(false);
+
     useEffect(() => {
-        if (sessionStorage.getItem("adminKey")) {
-            setIsAdminVerified(true);
-        }
-        else {
-            setIsAdminVerified(false);
+        const restoredAdminKey = sessionStorage.getItem("adminKey");
+        const restoredOperatorKey = sessionStorage.getItem("operatorKey");
+        const restoredManagerKey = sessionStorage.getItem("managerKey");
+        const restoredUserKey = sessionStorage.getItem("userKey");
+
+        if (restoredAdminKey) {
+            setAdminKey(restoredAdminKey);
+            setIsRestoredAdmin(true);
         }
 
-        if (sessionStorage.getItem("managerKey")) {
-            setIsManagerVerified(true);
+        if (restoredOperatorKey) {
+            setOperatorKey(restoredOperatorKey);
+            setIsRestoredOperator(true);
         }
-        else {
-            setIsManagerVerified(false);
+
+        if (restoredManagerKey) {
+            setManagerKey(restoredManagerKey);
+            setIsRestoredManager(true);
+        }
+
+        if (restoredUserKey) {
+            setUserKey(restoredUserKey);
+            setIsRestoredUser(true);
         }
     }, []);
 
-    const onVerifyAdmin = async (key: string): Promise<boolean> => {
-        return await BookManagerContract.hasRole(DEFAULT_ADMIN_ROLE, key);
+    const verifyKey = (key: string) => {
+        if (!isAddress(key)) {
+            throw new Error("Invalid etherium address");
+        }
     }
 
-    const onSubmitOperator = () => {
-        sessionStorage.setItem("operatorKey", operatorKey);
+    const onStoreAdminKey = async (): Promise<boolean> => {
+        verifyKey(adminKey);
+
+        const has = await BookManagerContract.hasRole(DEFAULT_ADMIN_ROLE, adminKey);
+
+        if (has) {
+            sessionStorage.setItem("adminKey", adminKey);
+        }
+
+        return has;
     };
 
-    const onRevokeOperator = () => {
-        sessionStorage.removeItem("operatorKey");
-        setOperatorKey("");
+    const onRemoveAdminKey = async (): Promise<boolean> => {
+        const storedKey = sessionStorage.getItem("adminKey");
+
+        if (storedKey === adminKey) {
+            sessionStorage.removeItem("adminKey");
+            return true;
+        }
+        else {
+            return false;
+        }
     };
 
-    const onVerifyOperator = async (key: string) => {
-        return await BookManagerContract.hasRole(OPERATOR_ROLE, key);
-    }
-    
-    const onVerifyManager = async (key: string) => {
-        return await BookManagerContract.hasRole(MANAGER_ROLE, key);
-    }
+    const onStoreOperatorKey = async (): Promise<boolean> => {
+        verifyKey(operatorKey);
 
-    const onSubmitUser = () => {
-        sessionStorage.setItem("userKey", userKey);
-    }
+        const has = await BookManagerContract.hasRole(OPERATOR_ROLE, operatorKey);
 
-    const onRevokeUser = () => {
-        sessionStorage.removeItem("userKey");
-        setUserKey("");
-    }
+        if (has) {
+            sessionStorage.setItem("operatorKey", operatorKey);
+        }
 
-    const onVerifyUser = async (key: string) => {
-        return await BookManagerContract.hasRole(USER_ROLE, key);
+        return has;
+    };
+
+    const onRemoveOperatorKey = async (): Promise<boolean> => {
+        const storedKey = sessionStorage.getItem("operatorKey");
+
+        if (storedKey === operatorKey) {
+            sessionStorage.removeItem("operatorKey");
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+
+    const onStoreManagerKey = async (): Promise<boolean> => {
+        verifyKey(managerKey);
+
+        const has = await BookManagerContract.hasRole(MANAGER_ROLE, managerKey);
+
+        if (has) {
+            sessionStorage.setItem("managerKey", managerKey);
+        }
+
+        return has;
+    };
+
+    const onRemoveManagerKey = async (): Promise<boolean> => {
+        const storedKey = sessionStorage.getItem("managerKey");
+
+        if (storedKey === managerKey) {
+            sessionStorage.removeItem("managerKey");
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+
+    const onStoreUserKey = async (): Promise<boolean> => {
+        verifyKey(userKey);
+
+        const has = await BookManagerContract.hasRole(USER_ROLE, userKey);
+
+        if (has) {
+            sessionStorage.setItem("userKey", userKey);
+        }
+
+        return has;
+    };
+
+    const onRemoveUserKey = async (): Promise<boolean> => {
+        const storedKey = sessionStorage.getItem("userKey");
+
+        if (storedKey === userKey) {
+            sessionStorage.removeItem("userKey");
+            return true;
+        }
+        else { 
+            return false;
+        }
     }
 
     return (
@@ -68,48 +158,68 @@ const KeyVerification = () => {
                 label="Admin key"
                 value={adminKey}
                 onChange={setAdminKey}
-                onSubmit={onSubmitAdmin}
-                onRevoke={onRevokeAdmin}
-                onVerify={onVerifyAdmin}
+                onSubmit={onStoreAdminKey}
+                onRevoke={onRemoveAdminKey}
+                disabled={false}
                 disableOnSuccess={true}
-                persistStorageKey="adminKey"
-                inputRole={InputRole.VERIFIER}
+                isRestoredFromStorage={isRestoredAdmin}
+                submitSuccessMessage={storeSuccessMessage}
+                submitFailMessage={storeFailMessage}
+                revokeSuccessMessage={removeSuccessMessage}
+                revokeFailMessage={removeFailMessage}
+                submitButtonText={submitButtonText}
+                revokeButtonText={revokeButtonText}
             />
 
             <LabeledSubmitRevokeInput
                 label="Operator key"
                 value={operatorKey}
                 onChange={setOperatorKey}
-                onSubmit={onSubmitOperator}
-                onRevoke={onRevokeOperator}
-                onVerify={onVerifyOperator}
+                onSubmit={onStoreOperatorKey}
+                onRevoke={onRemoveOperatorKey}
+                disabled={false}
                 disableOnSuccess={true}
-                persistStorageKey="operatorKey"
-                inputRole={InputRole.VERIFIER}
+                isRestoredFromStorage={isRestoredOperator}
+                submitSuccessMessage={storeSuccessMessage}
+                submitFailMessage={storeFailMessage}
+                revokeSuccessMessage={removeSuccessMessage}
+                revokeFailMessage={removeFailMessage}
+                submitButtonText={submitButtonText}
+                revokeButtonText={revokeButtonText}
             />
 
             <LabeledSubmitRevokeInput
                 label="Manager key"
                 value={managerKey}
                 onChange={setManagerKey}
-                onSubmit={onSubmitManager}
-                onRevoke={onRevokeManager}
-                onVerify={onVerifyManager}
+                onSubmit={onStoreManagerKey}
+                onRevoke={onRemoveManagerKey}
+                disabled={false}
                 disableOnSuccess={true}
-                persistStorageKey="managerKey"
-                inputRole={InputRole.VERIFIER}
+                isRestoredFromStorage={isRestoredManager}
+                submitSuccessMessage={storeSuccessMessage}
+                submitFailMessage={storeFailMessage}
+                revokeSuccessMessage={removeSuccessMessage}
+                revokeFailMessage={removeFailMessage}
+                submitButtonText={submitButtonText}
+                revokeButtonText={revokeButtonText}
             />
 
             <LabeledSubmitRevokeInput
                 label="User key"
                 value={userKey}
                 onChange={setUserKey}
-                onSubmit={onSubmitUser}
-                onRevoke={onRevokeUser}
-                onVerify={onVerifyUser}
+                onSubmit={onStoreUserKey}
+                onRevoke={onRemoveUserKey}
+                disabled={false}
                 disableOnSuccess={true}
-                persistStorageKey="userKey"
-                inputRole={InputRole.VERIFIER}
+                isRestoredFromStorage={isRestoredUser}
+                submitSuccessMessage={storeSuccessMessage}
+                submitFailMessage={storeFailMessage}
+                revokeSuccessMessage={removeSuccessMessage}
+                revokeFailMessage={removeFailMessage}
+                submitButtonText={submitButtonText}
+                revokeButtonText={revokeButtonText}
             />
         </>
     )
