@@ -47,3 +47,5 @@ lerna-debug.log*
 
 # nginx
 nginx.conf
+
+.env

@@ -58,7 +58,8 @@ const LabeledSubmitRevokeInput: React.FC<LabeledSubmitRevokeInputProps> = ({
                 setFeedback({ message: submitFailMessage, style: "text-danger" });
             }
         }
-        catch {
+        catch(error: any) {
+            console.log(error.message);
             setFeedback({ message: illFormedKeyMessage, style: "text-danger "});
         }
     };

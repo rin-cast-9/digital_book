@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import LabeledSubmitRevokeInput from './LabeledSubmitRevokeInput';
 import { BookManagerContract, provider } from '../../constants/blockchain';
-import { isAddress, JsonRpcSigner } from 'ethers';
+import { Wallet } from 'ethers';
 
 const KeyManagement = () => {
     const [operatorKey, setOperatorKey] = useState("");
@@ -16,31 +16,26 @@ const KeyManagement = () => {
     const submitButtonText = "Submit";
     const revokeButtonText = "Revoke";
 
-    const verifyKey = (key: string) => {
-        if (!isAddress(key)) {
-            throw new Error("Invalid etherium address");
-        }
-    }
-
-    const getOwnerSigner = async (sessionStorageKey: string): Promise<JsonRpcSigner> => {
+    const getOwnerSigner = (sessionStorageKey: string): Wallet => {
         const key = sessionStorage.getItem(sessionStorageKey);
 
         if (!key) {
             throw new Error("Insufficient authority to perform the operation");
         }
 
-        return await provider.getSigner(key);
+        return new Wallet(key, provider);
     }
 
     const onSubmitOperatorKey = async (): Promise<boolean> => {
-        verifyKey(operatorKey);
-
-        const ownerSigner = await getOwnerSigner("adminKey");
+        const ownerSigner = getOwnerSigner("adminKey");
 
         try {
+            const wallet = new Wallet(operatorKey);
+            const address = wallet.address;
+
             const tx = await BookManagerContract
                 .connect(ownerSigner)
-                .addOperator(operatorKey);
+                .addOperator(address);
                 
             const receipt = await tx.wait();
 
@@ -53,12 +48,15 @@ const KeyManagement = () => {
     }
 
     const onRevokeOperatorKey = async (): Promise<boolean> => {
-        const ownerSigner = await getOwnerSigner("adminKey");
+        const ownerSigner = getOwnerSigner("adminKey");
 
         try {
+            const wallet = new Wallet(operatorKey);
+            const address = wallet.address;
+
             const tx = await BookManagerContract
                 .connect(ownerSigner)
-                .revokeOperator(operatorKey);
+                .revokeOperator(address);
 
             const receipt = await tx.wait();
 
@@ -77,14 +75,15 @@ const KeyManagement = () => {
     }
 
     const onSubmitManagerKey = async (): Promise<boolean> => {
-        verifyKey(managerKey);
-
-        const ownerSigner = await getOwnerSigner("adminKey");
+        const ownerSigner = getOwnerSigner("adminKey");
 
         try {
+            const wallet = new Wallet(managerKey);
+            const address = wallet.address;
+
             const tx = await BookManagerContract
                 .connect(ownerSigner)
-                .addManager(managerKey);
+                .addManager(address);
             
             const receipt = await tx.wait();
 
@@ -97,12 +96,15 @@ const KeyManagement = () => {
     }
 
     const onRevokeManagerKey = async (): Promise<boolean> => {
-        const ownerSigner = await getOwnerSigner("adminKey");
+        const ownerSigner = getOwnerSigner("adminKey");
 
         try {
+            const wallet = new Wallet(managerKey);
+            const address = wallet.address;
+
             const tx = await BookManagerContract
                 .connect(ownerSigner)
-                .revokeManager(managerKey);
+                .revokeManager(address);
 
             const receipt = await tx.wait();
 
@@ -121,14 +123,15 @@ const KeyManagement = () => {
     }
 
     const onSubmitUserKey = async (): Promise<boolean> => {
-        verifyKey(userKey);
-
-        const ownerSigner = await getOwnerSigner("managerKey");
+        const ownerSigner = getOwnerSigner("managerKey");
 
         try {
+            const wallet = new Wallet(userKey);
+            const address = wallet.address;
+
             const tx = await BookManagerContract
                 .connect(ownerSigner)
-                .addUser(userKey);
+                .addUser(address);
 
             const receipt = await tx.wait();
 
@@ -141,9 +144,12 @@ const KeyManagement = () => {
     }
 
     const onRevokeUserKey = async (): Promise<boolean> => {
-        const ownerSigner = await getOwnerSigner("managerKey");
+        const ownerSigner = getOwnerSigner("managerKey");
 
         try {
+            const wallet = new Wallet(operatorKey);
+            const address = wallet.address;
+            
             const tx = await BookManagerContract
                 .connect(ownerSigner)
                 .revokeUser(userKey);
@@ -174,6 +180,7 @@ const KeyManagement = () => {
                 onRevoke={onRevokeOperatorKey}
                 disabled={!sessionStorage.getItem("adminKey")?.trim()}
                 disableOnSuccess={false}
+                isRestoredFromStorage={false}
                 submitSuccessMessage={submitSuccessMessage}
                 submitFailMessage={submitFailMessage}
                 revokeSuccessMessage={revokeSuccessMessage}
@@ -190,6 +197,7 @@ const KeyManagement = () => {
                 onRevoke={onRevokeManagerKey}
                 disabled={!sessionStorage.getItem("adminKey")?.trim()}
                 disableOnSuccess={false}
+                isRestoredFromStorage={false}
                 submitSuccessMessage={submitSuccessMessage}
                 submitFailMessage={submitFailMessage}
                 revokeSuccessMessage={revokeSuccessMessage}
@@ -206,6 +214,7 @@ const KeyManagement = () => {
                 onRevoke={onRevokeUserKey}
                 disabled={!sessionStorage.getItem("managerKey")?.trim()}
                 disableOnSuccess={false}
+                isRestoredFromStorage={false}
                 submitSuccessMessage={submitSuccessMessage}
                 submitFailMessage={submitFailMessage}
                 revokeSuccessMessage={revokeSuccessMessage}

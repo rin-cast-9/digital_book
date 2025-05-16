@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import LabeledSubmitRevokeInput from "./LabeledSubmitRevokeInput";
 import { BookManagerContract, DEFAULT_ADMIN_ROLE, MANAGER_ROLE, OPERATOR_ROLE, USER_ROLE } from "../../constants/blockchain";
-import { isAddress } from "ethers";
+import { Wallet } from "ethers";
 
 
 const KeyVerification = () => {
@@ -50,16 +50,11 @@ const KeyVerification = () => {
         }
     }, []);
 
-    const verifyKey = (key: string) => {
-        if (!isAddress(key)) {
-            throw new Error("Invalid etherium address");
-        }
-    }
-
     const onStoreAdminKey = async (): Promise<boolean> => {
-        verifyKey(adminKey);
+        const wallet = new Wallet(adminKey);
+        const address = wallet.address;
 
-        const has = await BookManagerContract.hasRole(DEFAULT_ADMIN_ROLE, adminKey);
+        const has = await BookManagerContract.hasRole(DEFAULT_ADMIN_ROLE, address);
 
         if (has) {
             sessionStorage.setItem("adminKey", adminKey);
@@ -81,9 +76,10 @@ const KeyVerification = () => {
     };
 
     const onStoreOperatorKey = async (): Promise<boolean> => {
-        verifyKey(operatorKey);
+        const wallet = new Wallet(operatorKey);
+        const address = wallet.address;
 
-        const has = await BookManagerContract.hasRole(OPERATOR_ROLE, operatorKey);
+        const has = await BookManagerContract.hasRole(OPERATOR_ROLE, address);
 
         if (has) {
             sessionStorage.setItem("operatorKey", operatorKey);
@@ -105,9 +101,10 @@ const KeyVerification = () => {
     };
 
     const onStoreManagerKey = async (): Promise<boolean> => {
-        verifyKey(managerKey);
+        const wallet = new Wallet(managerKey);
+        const address = wallet.address;
 
-        const has = await BookManagerContract.hasRole(MANAGER_ROLE, managerKey);
+        const has = await BookManagerContract.hasRole(MANAGER_ROLE, address);
 
         if (has) {
             sessionStorage.setItem("managerKey", managerKey);
@@ -129,9 +126,10 @@ const KeyVerification = () => {
     };
 
     const onStoreUserKey = async (): Promise<boolean> => {
-        verifyKey(userKey);
+        const wallet = new Wallet(userKey);
+        const address = wallet.address;
 
-        const has = await BookManagerContract.hasRole(USER_ROLE, userKey);
+        const has = await BookManagerContract.hasRole(USER_ROLE, address);
 
         if (has) {
             sessionStorage.setItem("userKey", userKey);
