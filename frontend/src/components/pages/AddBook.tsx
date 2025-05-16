@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AuthorsInput from "../UI/AuthorsInput"
 import { BookManagerContract, provider } from "../../constants/blockchain";
+import { Wallet } from "ethers";
 
 
 const AddBook = () => {
@@ -18,7 +19,7 @@ const AddBook = () => {
             throw new Error("Unauthorized access");
         }
 
-        const operatorSigner = await provider.getSigner(operatorAddress);
+        const operatorSigner = new Wallet(operatorAddress, provider);
         
         /**
          * uint16 _yearPublished,
@@ -33,7 +34,7 @@ const AddBook = () => {
             publisher,
             publisherCity,
             omittedLastEmptyAuthors
-        ).then(() => { })
+        )
         .catch((error: Error) => {
             console.error(`An error occurred during book submision: ${error}`);
         })
