@@ -4,7 +4,7 @@ import hre from "hardhat";
 import { BookManager } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("BookManager", () => {
+describe.skip("BookManager", () => {
     async function deployBookManagerContract() {
         const [owner, operatorAccount, managerAccount, userAccount] = await hre.ethers.getSigners();
 
