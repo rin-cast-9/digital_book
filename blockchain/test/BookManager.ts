@@ -198,6 +198,45 @@ describe.skip("BookManager", () => {
             }
         });
 
+        it("Should eventually revert due to gas limit or return size when calling getBooks()", async () => {
+            const maxBooks = 10000;
+            const batchSize = 50;
+
+            let i = 0;
+            try {
+                while (i < maxBooks) {
+                    const txs = [];
+                    for (let j = 0; j < batchSize; ++ j) {
+                        const book = {
+                            name: `Book${i}`,
+                            publisher: `Publisher${i}`,
+                            publisherCity: `PublisherCity${i}`,
+                            authors: [`Author${i * 3}`, `Author${i * 3 + 1}`, `Author${i * 3 + 2}`],
+                            yearPublished: 2025,
+                        };
+
+                        txs.push(bookManager.connect(operatorAccount).addBook(
+                            book.yearPublished,
+                            book.name,
+                            book.publisher,
+                            book.publisherCity,
+                            book.authors
+                        ));
+
+                        ++ i;
+                    }
+
+                    await Promise.all(txs);
+                    await bookManager.getBooks();
+                }
+
+                expect.fail("Expected getBooks to revert due to gas or return size limit, but it didn't");
+            }
+            catch (error: any) {
+                expect(error.message).to.match(/ran out of gas/i);
+            }
+        });
+
         it("Should fail at the incorrect range", async () => {
             const numberOfBooks = 6;
 

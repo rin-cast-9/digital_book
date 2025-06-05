@@ -14,8 +14,12 @@ contract BookManager is RolesManager {
         bool isAdopted;
     }
 
-    uint32 private booksSaved = 0;
-    mapping(uint32 => bool) public isBookAdopted;
+    uint32 private numberOfBooks = 0;
+    mapping(uint32 => bool) private isBookAdopted;
+
+    function getNumberOfBooks() external view returns (uint32) {
+        return numberOfBooks;
+    }
 
     event BookAdded(
         uint32 indexed bookId,
@@ -46,7 +50,7 @@ contract BookManager is RolesManager {
         string memory _publisherCity,
         string[] memory _authors
     ) public onlyRole(OPERATOR_ROLE) {
-        emit BookAdded(booksSaved ++, block.timestamp, _yearPublished, _name, _publisher, _publisherCity, _authors);
+        emit BookAdded(numberOfBooks ++, block.timestamp, _yearPublished, _name, _publisher, _publisherCity, _authors);
     }
 
     function adoptBook(uint32 _bookId) public onlyRole(USER_ROLE) {
@@ -65,7 +69,7 @@ contract BookManager is RolesManager {
         string[] memory _authors
     ) public onlyRole(OPERATOR_ROLE) {
         uint256 timestamp = block.timestamp;
-        uint32 newBookId = booksSaved ++;
+        uint32 newBookId = numberOfBooks ++;
 
         if (isBookAdopted[_bookId]) {
             isBookAdopted[newBookId] = true;
