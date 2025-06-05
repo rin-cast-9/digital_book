@@ -1,74 +1,107 @@
 import { useEffect, useState } from "react";
-import { BookManagerContract } from "../../constants/blockchain";
+import { BookManagerContract, DEPLOYMENT_BLOCK, provider } from "../../constants/blockchain";
 import { useNavigate } from "react-router-dom";
 import { Book } from "../../constants/Book";
+import { BookCatalogDB, initDB } from "../../db/indexedDB";
+import { EventLog } from "ethers";
+import { IDBPDatabase } from "idb";
 
 const BookCatalog = () => {
     const [books, setBooks] = useState<Book[] | null>(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const fetchBooks = (isSessionStorageEmpty: boolean) => {
-        if (isSessionStorageEmpty) {
-            fetchBooksAnew();
+    const fetchBooks = async () => {
+        const db = await initDB();
+
+        const meta = await db.get("meta", "lastProcessedBlock");
+        const fromBlock = meta?.value ?? DEPLOYMENT_BLOCK;
+        const latestBlock = await provider.getBlockNumber();
+
+        const [newEvents, typoMap] = await Promise.all([
+            BookManagerContract.queryFilter(
+                BookManagerContract.filters.BookAdded(),
+                fromBlock + 1,
+                latestBlock
+            ),
+
+            fetchTypos(fromBlock, latestBlock)
+        ]);
+
+        const newBooks = newEvents.map(event => {
+            const e = event as EventLog;
+            const args = e.args;
+
+            return {
+                bookId: Number(args[0]),
+                name: args[3],
+                publisher: args[4],
+                publisherCity: args[5],
+                authors: Object.values(args[6]),
+                yearPublished: Number(args[2]),
+                isAdopted: false,
+            } as Book;
+        });
+
+        const filteredBooks = newBooks.filter(book => {
+            return !typoMap.has(book.bookId);
+        })
+
+        for (const book of filteredBooks) {
+            await db.put("books", book);
         }
-        else {
-            syncSessionStorage();
-        }
 
-        setLoading(false);
-    }
+        await fetchAdoptions(db, fromBlock, latestBlock);
 
-    const fetchBooksAnew = async () => {
-        const fetchedBooks = await BookManagerContract.getBooks().catch(console.error);
-        const serializedBooks = fetchedBooks.map(serializeBook);
+        await db.put("meta", { key: "lastProcessedBlock", value: latestBlock });
 
-        sessionStorage.setItem("books", JSON.stringify(serializedBooks));
-        setBooks(fetchedBooks);
-    }
-
-    const syncSessionStorage = async () => {
-        const localBooksRaw = sessionStorage.getItem("books")!
-        const localBooks = JSON.parse(localBooksRaw).map(parseBook);
-        const localLength = localBooks.length;
-
-        const onChainLength: number = await BookManagerContract.getLength().catch(console.error);
-
-        if (localLength >= onChainLength) {
-            setBooks(localBooks);
-            return;
-        }
-        
-        const fetchedBooks = await BookManagerContract.getBooksInRange(localLength, onChainLength).catch(console.error);
-        const serializedBooks = fetchedBooks.map(serializeBook);
-
-        const updatedBooks = [...localBooks, ...fetchedBooks];
+        const updatedBooks = await db.getAll("books");
         setBooks(updatedBooks);
+        setLoading(false);
+    };
 
-        const allSerialized = [...localBooks.map(serializeBook), ...serializedBooks];
-        sessionStorage.setItem("books", JSON.stringify(allSerialized));
-    }
+    const fetchTypos = async (fromBlock: number, toBlock: number): Promise<Map<number, number>> => {
+        const typoEvents = await BookManagerContract.queryFilter(
+            BookManagerContract.filters.BookTypoCorrected(),
+            fromBlock + 1,
+            toBlock
+        );
 
-    const parseBook = (obj: any): Book => ({
-        name: obj.name,
-        publisher: obj.publisher,
-        publisherCity: obj.publisherCity,
-        authors: obj.authors,
-        yearPublished: BigInt(obj.yearPublished),
-        isAdopted: obj.isAdopted,
-    });
+        const correctionMap = new Map<number, number>();
 
-    const serializeBook = (book: Book) => ({
-        name: book.name,
-        publisher: book.publisher,
-        publisherCity: book.publisherCity,
-        authors: book.authors,
-        yearPublished: book.yearPublished.toString(),
-        isAdopted: book.isAdopted,
-    });
+        for (const event of typoEvents) {
+            const args = (event as EventLog).args;
+            correctionMap.set(Number(args[0]), Number(args[1]));
+        }
+
+        return correctionMap;
+    };
+
+    const fetchAdoptions = async (db: IDBPDatabase<BookCatalogDB>, fromBlock: number, toBlock: number): Promise<void> => {
+        const adoptionEvents = await BookManagerContract.queryFilter(
+            BookManagerContract.filters.BookAdoption(),
+            fromBlock + 1,
+            toBlock
+        );
+
+        const adoptedBookIds = new Set<number>();
+
+        for (const event of adoptionEvents) {
+            const args = (event as EventLog).args;
+            adoptedBookIds.add(Number((args[0])));
+        }
+
+        for (const bookId of adoptedBookIds) {
+            const existing = await db.get("books", bookId);
+            if (existing) {
+                existing.isAdopted = true;
+                await db.put("books", existing);
+            }
+        }
+    };
 
     useEffect(() => {
-        fetchBooks(!sessionStorage.getItem("books")?.trim());
+        fetchBooks();
     }, []);
 
     if (loading) {

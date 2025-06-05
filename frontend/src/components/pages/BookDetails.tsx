@@ -1,19 +1,18 @@
 import { useParams } from "react-router-dom"
 import { Book } from "../../constants/Book";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import { BookManagerContract, provider } from "../../constants/blockchain";
+import { initDB } from "../../db/indexedDB";
 
 
 const BookDetails = () => {
     const { id } = useParams<{ id: string }> ();
-    const books: Book[] = JSON.parse(sessionStorage.getItem("books") || "[]").map((book: Book) => ({
-        ...book,
-        yearPublished: Number(book.yearPublished),
-    }));
-    const [book, setBook] = useState(books[Number(id)]);
+    const bookId = Number(id);
+    const [book, setBook] = useState<Book | null>(null);
+    const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [details, setDetails] = useState({
         firstName: '',
@@ -21,6 +20,17 @@ const BookDetails = () => {
         address: '',
         phone: '',
     });
+
+    useEffect(() => {
+        const fetchBook = async () => {
+            const db = await initDB();
+            const storedBook = await db.get("books", bookId);
+            setBook(storedBook || null);
+            setLoading(false);
+        };
+
+        fetchBook();
+    }, [bookId]);
 
     const handleChange = (e: any) => {
         setDetails({ ...details, [e.target.name]: e.target.value });
@@ -41,7 +51,7 @@ const BookDetails = () => {
         setShowModal(false);
     };
 
-    if (!book) {
+    if (!book || loading) {
         return (
             <>
                 <div>

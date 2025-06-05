@@ -1,12 +1,12 @@
 import { ethers } from "ethers";
 
-// import { abi as BookManagerAbi } from "../artifacts/contracts/BookManager.sol/BookManager.json";
+import { abi as BookManagerAbi } from "../../../blockchain/artifacts/contracts/BookManager.sol/BookManager.json";
 
-const modules = import.meta.env.VITE_DOCKER
-    ? import.meta.glob("../artifacts/contracts/BookManager.sol/BookManager.json", { eager: true })
-    : import.meta.glob("../../../blockchain/artifacts/contracts/BookManager.sol/BookManager.json", { eager: true });
+// const modules = import.meta.env.VITE_DOCKER
+//     ? import.meta.glob("../artifacts/contracts/BookManager.sol/BookManager.json", { eager: true })
+//     : import.meta.glob("../../../blockchain/artifacts/contracts/BookManager.sol/BookManager.json", { eager: true });
 
-const BookManagerAbi = modules[Object.keys(modules)[0]]?.abi;
+// const BookManagerAbi = modules[Object.keys(modules)[0]]!.abi;
 
 const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 export const DEFAULT_ADMIN_ROLE = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -17,3 +17,5 @@ export const USER_ROLE = "0x14823911f2da1b49f045a0929a60b8c1f2a7fc8c06c7284ca3e8
 export const provider = new ethers.JsonRpcProvider(`http://${window.location.hostname}:8545/`);
 
 export const BookManagerContract = new ethers.Contract(CONTRACT_ADDRESS, BookManagerAbi, provider);
+
+export const DEPLOYMENT_BLOCK = 0;

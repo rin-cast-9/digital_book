@@ -1,8 +1,9 @@
 export interface Book {
+    bookId: number;
     name: string;
     publisher: string;
     publisherCity: string;
     authors: string[];
-    yearPublished: bigint;
+    yearPublished: number;
     isAdopted: boolean;
 };

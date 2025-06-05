@@ -2,6 +2,7 @@ import { useState } from "react";
 import AuthorsInput from "../UI/AuthorsInput"
 import { BookManagerContract, provider } from "../../constants/blockchain";
 import { Wallet } from "ethers";
+import { Interface } from "ethers";
 
 
 const AddBook = () => {
@@ -20,6 +21,7 @@ const AddBook = () => {
         }
 
         const operatorSigner = new Wallet(operatorAddress, provider);
+        console.log(`${operatorSigner}`);
         
         /**
          * uint16 _yearPublished,
@@ -35,8 +37,19 @@ const AddBook = () => {
             publisherCity,
             omittedLastEmptyAuthors
         )
-        .catch((error: Error) => {
-            console.error(`An error occurred during book submision: ${error}`);
+        .catch((error: any) => {
+            if (error.code === 'CALL_EXCEPTION' && error.data) {
+                const iface = new Interface(BookManagerContract.interface.fragments);
+                try {
+                    const decoded = iface.parseError(error.data);
+                    console.error('Custom error:', decoded?.name, decoded?.args);
+                }
+                catch {
+                    console.error('Unknown revert data:', error.data);
+                }
+            } else {
+                console.error(error);
+            }
         })
     }
 
