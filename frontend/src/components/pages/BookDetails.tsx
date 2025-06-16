@@ -1,16 +1,18 @@
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { Book } from "../../constants/Book";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import { BookManagerContract, provider } from "../../constants/blockchain";
 import { initDB } from "../../db/indexedDB";
+import { AdoptionModal } from "../UI/AdoptionModal";
 
 
 const BookDetails = () => {
     const { id } = useParams<{ id: string }> ();
     const bookId = Number(id);
+
     const [book, setBook] = useState<Book | null>(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -20,6 +22,10 @@ const BookDetails = () => {
         address: '',
         phone: '',
     });
+
+    const navigate = useNavigate();
+
+    const isOperator = !!sessionStorage.getItem("operatorKey");
 
     useEffect(() => {
         const fetchBook = async () => {
@@ -32,14 +38,13 @@ const BookDetails = () => {
         fetchBook();
     }, [bookId]);
 
-    const handleChange = (e: any) => {
-        setDetails({ ...details, [e.target.name]: e.target.value });
-    }
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setDetails(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
 
-    const adoptBook = async () => {
-        console.log('Adopting with: ', details);
-
+    const adoptBook = useCallback(async () => {
         const userAddress = sessionStorage.getItem("userKey");
+
         if (!userAddress) {
             throw new Error("Unauthorized access");
         }
@@ -47,9 +52,11 @@ const BookDetails = () => {
         const userSigner = await provider.getSigner(userAddress);
         
         await BookManagerContract.connect(userSigner).adoptBook(id);
-        setBook(await BookManagerContract.getBook(id));
+
+        const updated = await BookManagerContract.getBook(id);
+        setBook(updated);
         setShowModal(false);
-    };
+    }, [id]);
 
     if (!book || loading) {
         return (
@@ -64,71 +71,28 @@ const BookDetails = () => {
     return (
         <>
             <div className="border rounded-4 shadow-sm p-4">
-                <h1 className="">{book.name}</h1>
-                <p className="">{book.publisher}, {book.publisherCity} ({book.yearPublished.toString()})</p>
-                <p className="">Authors: {book.authors.join(", ")}</p>
-                {book.isAdopted ?
-                    <p>✔ Adopted</p> :
-                    <button className="btn btn-success" onClick={() => setShowModal(true)}>Adopt</button>}
+                <h1>{book.name}</h1>
+                <p>{book.publisher}, {book.publisherCity} ({book.yearPublished})</p>
+                <p>Authors: {book.authors.join(", ")}</p>
+
+                {book.isAdopted ? (
+                    <p>✔ Adopted</p>
+                ) : (
+                    <button className="btn btn-success" onClick={() => setShowModal(true)}>Adopt</button>
+                )}
+
+                {isOperator && (
+                    <button className="btn btn-warning ms-2" onClick={() => navigate(`/addBook`, { state: { book }})}>Edit</button>
+                )}
             </div>
 
-            <Modal centered show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>
-                        Book delivery
-                    </Modal.Title>
-                </Modal.Header>
-
-                <Modal.Body>
-                    <Form.Group className="mb-3">
-                        <Form.Label>First Name</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="firstName"
-                            placeholder="First Name"
-                            value={details.firstName}
-                            onChange={handleChange}
-                        />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Last Name</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="lastName"
-                            placeholder="Last Name"
-                            value={details.lastName}
-                            onChange={handleChange}
-                        />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Address</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="address"
-                            placeholder="Address"
-                            value={details.address}
-                            onChange={handleChange}
-                        />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Phone Number</Form.Label>
-                        <Form.Control
-                            type="text"
-                            name="phone"
-                            placeholder="Phone Number"
-                            value={details.phone}
-                            onChange={handleChange}
-                        />
-                    </Form.Group>
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
-                    <Button variant="success" onClick={() => {
-                        adoptBook();
-                    }}>Order</Button>
-                </Modal.Footer>
-            </Modal>
+            <AdoptionModal
+                show={showModal}
+                onClose={() => setShowModal(false)}
+                onSubmit={adoptBook}
+                details={details}
+                onChange={handleChange}
+            />
         </>
     )
 }

@@ -24,6 +24,10 @@ build
 # Hardhat Ignition default folder for deployments against a local node
 blockchain/ignition/deployments/chain-31337
 
+# debug info
+blockchain/ignition/deployments/**/artifacts/*.dbg.json
+blockchain/ignition/deployments/**/build-info/
+
 # misc
 .DS_Store
 .env.**

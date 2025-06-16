@@ -1,16 +1,67 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import AuthorsInput from "../UI/AuthorsInput"
 import { BookManagerContract, provider } from "../../constants/blockchain";
 import { Wallet } from "ethers";
 import { Interface } from "ethers";
+import { useLocation } from "react-router-dom";
+import { Book } from "../../constants/Book";
 
 
 const AddBook = () => {
-    const [title, setTitle] = useState("");
-    const [publisher, setPublisher] = useState("");
-    const [publisherCity, setPublisherCity] = useState("");
-    const [yearPublished, setYearPublished] = useState<number>();
-    const [authors, setAuthors] = useState<string[]>([""]);
+    const { state } = useLocation();
+    const isEdit = Boolean(state?.book);
+    const originalBook = state?.book as Book | undefined;
+
+    const [title, setTitle] = useState(originalBook?.name ?? "");
+    const [publisher, setPublisher] = useState(originalBook?.publisher ?? "");
+    const [publisherCity, setPublisherCity] = useState(originalBook?.publisherCity ?? "");
+    const [yearPublished, setYearPublished] = useState<number>(originalBook?.yearPublished ?? 0);
+    const [authors, setAuthors] = useState<string[]>(originalBook?.authors ?? [""]);
+
+    const modified = useMemo(() => {
+        if (!originalBook) {
+            return true;
+        }
+
+        return (
+            title !== originalBook.name ||
+            publisher !== originalBook.publisher ||
+            publisherCity !== originalBook.publisherCity ||
+            yearPublished !== originalBook.yearPublished ||
+            JSON.stringify(authors.filter(a => a.trim())) !== JSON.stringify(originalBook.authors)
+        );
+    }, [title, publisher, yearPublished, authors, originalBook]);
+
+    const handleUpdate = async () => {
+        if (!originalBook) {
+            console.error("No original book provided for update");
+            return;
+        }
+
+        const operatorAddress = sessionStorage.getItem("operatorKey");
+        if (!operatorAddress) {
+            throw new Error("Unauthorized");
+        }
+
+        const operatorSigner = new Wallet(operatorAddress, provider);
+
+        /**
+         * uint32 _bookId,
+         * uint16 _yearPublished,
+         * string memory _name,
+         * string memory _publisher,
+         * string memory _publisherCity,
+         * string[] memory _authors
+         */
+        await BookManagerContract.connect(operatorSigner).correctTypo(
+            originalBook.bookId,
+            yearPublished,
+            title,
+            publisher,
+            publisherCity,
+            authors
+        );
+    };
 
     const handleSubmit = async () => {
         const omittedLastEmptyAuthors = authors.slice(0, -1);
@@ -50,20 +101,30 @@ const AddBook = () => {
             } else {
                 console.error(error);
             }
-        })
-    }
+        });
+    };
 
     return (
         <>
             <h2 className="mb-3">
                 Book
             </h2>
-            <button
-                className="btn btn-outline-primary mb-4"
-                onClick={handleSubmit}
-            >
-                Submit
-            </button>
+            {isEdit ? (
+                <button
+                    className="btn btn-warning mb-4"
+                    disabled={!modified}
+                    onClick={handleUpdate}
+                >
+                    Update
+                </button>
+            ) : (
+                <button
+                    className="btn btn-outline-primary mb-4"
+                    onClick={handleSubmit}
+                >
+                    Submit
+                </button>
+            )}
             <div className="sticky-top" style={{ minHeight: "600px" }}>
                 <div className="form-group">
                     <div className="mb-3">
